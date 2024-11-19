@@ -24,6 +24,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="642706962641-6rvd0slpvv4lu3fourdqpko9csrpl2kc.apps.googleusercontent.com" />
     </application>
 
 </manifest>

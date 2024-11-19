@@ -1,15 +1,22 @@
 // SignUpScreen.kt
-package com.example.checkball.ui.screen.signup
+package com.example.checkball.ui.screen
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.checkball.viewmodel.AuthViewModel
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,6 +29,46 @@ fun SignUpScreen(navController: NavController) {
 
     val user by authViewModel.user.collectAsState()
     val errorMessage by authViewModel.errorMessage.collectAsState()
+
+    val context = LocalContext.current
+
+    // Google Sign-In client
+    val oneTapClient = remember { Identity.getSignInClient(context) }
+
+    // Google Sign-In request
+    val signInRequest = remember {
+        BeginSignInRequest.builder()
+            .setGoogleIdTokenRequestOptions(
+                BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                    .setSupported(true)
+                    .setServerClientId("642706962641-6rvd0slpvv4lu3fourdqpko9csrpl2kc.apps.googleusercontent.com") // Replace with your actual Web client ID
+                    .setFilterByAuthorizedAccounts(false)
+                    .build()
+            )
+            .setAutoSelectEnabled(true)
+            .build()
+    }
+
+    // Launcher for Google Sign-In
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            try {
+                val credential = oneTapClient.getSignInCredentialFromIntent(result.data)
+                val idToken = credential.googleIdToken
+                if (idToken != null) {
+                    authViewModel.signInWithGoogle(idToken)
+                } else {
+                    authViewModel.setError("Google Sign-In failed")
+                }
+            } catch (e: Exception) {
+                authViewModel.setError("Google Sign-In failed: ${e.localizedMessage}")
+            }
+        } else {
+            authViewModel.setError("Google Sign-In canceled")
+        }
+    }
 
     // Navigate to the main screen when the user signs up successfully
     LaunchedEffect(user) {
@@ -94,6 +141,23 @@ fun SignUpScreen(navController: NavController) {
                     enabled = email.isNotBlank() && password.isNotBlank() && confirmPassword.isNotBlank()
                 ) {
                     Text("Sign Up")
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = {
+                        oneTapClient.beginSignIn(signInRequest)
+                            .addOnSuccessListener { result ->
+                                googleSignInLauncher.launch(
+                                    IntentSenderRequest.Builder(result.pendingIntent.intentSender).build()
+                                )
+                            }
+                            .addOnFailureListener {
+                                authViewModel.setError("Google Sign-In failed: ${it.localizedMessage}")
+                            }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Sign up with Google")
                 }
                 TextButton(onClick = { navController.navigate("login") }) {
                     Text("Already have an account? Log in")

@@ -102,4 +102,11 @@ dependencies {
 
     // Hilt Navigation Compose
     implementation(libs.androidx.hilt.navigation.compose)
+
+    // Google Play Services
+    implementation(libs.play.services.auth)
+
+    // Firebase Authentication
+    implementation(platform(libs.firebase.bom.v3211))
+    implementation(libs.google.firebase.auth.ktx)
 }

@@ -8,9 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.*
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
-import com.example.checkball.ui.screen.login.LoginScreen
-import com.example.checkball.ui.screen.signup.SignUpScreen
-//import com.example.checkball.ui.screen.main.MainScreen
+import com.example.checkball.ui.screen.LoginScreen
+import com.example.checkball.ui.screen.SignUpScreen
+import com.example.checkball.ui.screen.MainScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -32,6 +32,6 @@ fun AppNavigation() {
     NavHost(navController = navController, startDestination = startDestination) {
         composable("login") { LoginScreen(navController) }
         composable("signup") { SignUpScreen(navController) }
-//        composable("main") { MainScreen(navController) }
+        composable("main") { MainScreen(navController) }
     }
 }

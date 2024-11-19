@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import com.google.firebase.auth.GoogleAuthProvider
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
@@ -44,6 +45,11 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun logout() {
+        authRepository.logout()
+        _user.value = null
+    }
+
     fun clearError() {
         _errorMessage.value = null
     }
@@ -51,4 +57,16 @@ class AuthViewModel @Inject constructor(
     fun setError(message: String) {
         _errorMessage.value = message
     }
+
+    fun signInWithGoogle(idToken: String) {
+        viewModelScope.launch {
+            val result = authRepository.firebaseAuthWithGoogle(idToken)
+            result.onSuccess {
+                _user.value = it
+            }.onFailure {
+                _errorMessage.value = it.message
+            }
+        }
+    }
 }
+
