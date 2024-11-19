@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.example.checkball"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.checkball"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -61,6 +61,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation("androidx.core:core-splashscreen:1.0.1")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -75,21 +76,21 @@ dependencies {
     // Add the dependency for the Firebase SDK for Google Analytics
     implementation(libs.firebase.analytics)
 
-    // Firebase dependencies
-    implementation(libs.firebase.auth.ktx)
-    implementation(libs.firebase.firestore.ktx)
-    implementation(libs.firebase.storage.ktx)
-    implementation(libs.firebase.analytics.ktx)
-    implementation(libs.firebase.crashlytics.ktx)
-
-    // Google Maps and Places
-    implementation(libs.play.services.maps)
-    implementation(libs.places)
-
-    // Navigation Component
-    implementation(libs.androidx.navigation.compose)
-
-    // Accompanist Permissions
-    implementation(libs.accompanist.permissions)
+//    // Firebase dependencies
+//    implementation(libs.firebase.auth.ktx)
+//    implementation(libs.firebase.firestore.ktx)
+//    implementation(libs.firebase.storage.ktx)
+//    implementation(libs.firebase.analytics.ktx)
+//    implementation(libs.firebase.crashlytics.ktx)
+//
+//    // Google Maps and Places
+//    implementation(libs.play.services.maps)
+//    implementation(libs.places)
+//
+//    // Navigation Component
+//    implementation(libs.androidx.navigation.compose)
+//
+//    // Accompanist Permissions
+//    implementation(libs.accompanist.permissions)
 
 }
