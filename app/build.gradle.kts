@@ -76,21 +76,21 @@ dependencies {
     // Add the dependency for the Firebase SDK for Google Analytics
     implementation(libs.firebase.analytics)
 
-//    // Firebase dependencies
-//    implementation(libs.firebase.auth.ktx)
-//    implementation(libs.firebase.firestore.ktx)
-//    implementation(libs.firebase.storage.ktx)
-//    implementation(libs.firebase.analytics.ktx)
+    // Firebase dependencies
+    implementation(libs.firebase.auth.ktx)
+    implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.storage.ktx)
+    implementation(libs.firebase.analytics.ktx)
 //    implementation(libs.firebase.crashlytics.ktx)
-//
-//    // Google Maps and Places
-//    implementation(libs.play.services.maps)
-//    implementation(libs.places)
-//
-//    // Navigation Component
-//    implementation(libs.androidx.navigation.compose)
-//
-//    // Accompanist Permissions
-//    implementation(libs.accompanist.permissions)
+
+    // Google Maps and Places
+    implementation(libs.play.services.maps)
+    implementation(libs.places)
+
+    // Navigation Component
+    implementation(libs.androidx.navigation.compose)
+
+    // Accompanist Permissions
+    implementation(libs.accompanist.permissions)
 
 }

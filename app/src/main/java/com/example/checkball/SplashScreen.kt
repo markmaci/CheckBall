@@ -80,7 +80,7 @@ class SplashActivity : ComponentActivity() {
                     contentDescription = null,
                     modifier = Modifier
                         .offset(y = bounceAnim.value.dp)
-                        .size(100.dp)
+                        .size(200.dp)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
