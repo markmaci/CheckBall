@@ -78,7 +78,7 @@ fun LoginScreen(navController: NavController) {
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Login") })
+            TopAppBar(title = { Text("Login To CheckBall") })
         },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
