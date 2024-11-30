@@ -1,3 +1,14 @@
+import java.util.Properties
+
+val secrets = Properties().apply {
+    val secretsFile = rootProject.file("secrets.properties")
+    if (secretsFile.exists()) {
+        load(secretsFile.inputStream())
+    } else {
+        println("Warning: secrets.properties file is missing. Default values will be used.")
+    }
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -24,6 +35,13 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        manifestPlaceholders.putAll(
+            mapOf(
+                "APPLICATION_ID" to secrets.getProperty("APPLICATION_ID", "default_application_id"),
+                "API_KEY" to secrets.getProperty("API_KEY", "default_api_key")
+            )
+        )
     }
 
     buildTypes {
@@ -44,6 +62,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -89,6 +108,7 @@ dependencies {
     // Google Maps and Places
     implementation(libs.play.services.maps)
     implementation(libs.places)
+    implementation(libs.maps.compose)
 
     // Navigation Component
     implementation(libs.androidx.navigation.compose)

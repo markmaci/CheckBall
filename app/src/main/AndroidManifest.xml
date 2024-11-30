@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <application
         android:name=".CheckBallApp"
         android:allowBackup="true"
@@ -26,7 +28,10 @@
         </activity>
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="642706962641-6rvd0slpvv4lu3fourdqpko9csrpl2kc.apps.googleusercontent.com" />
+            android:value="${APPLICATION_ID}" />
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${API_KEY}" />
     </application>
 
 </manifest>
