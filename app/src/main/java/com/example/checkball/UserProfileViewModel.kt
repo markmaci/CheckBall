@@ -7,8 +7,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 class UserProfileViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
     val userProfile = mutableStateOf(UserProfile())
-    val isLoading = mutableStateOf(true)
-    val errorMessage = mutableStateOf<String?>(null)
+    private val isLoading = mutableStateOf(true)
+    private val errorMessage = mutableStateOf<String?>(null)
 
     fun fetchUserData(userId: String) {
         db.collection("users").document(userId)

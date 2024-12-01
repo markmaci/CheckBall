@@ -1,8 +1,7 @@
 package com.example.checkball
 
 data class UserProfile(
-    val uid: String = "",
-    val displayName: String = "",
-    val email: String = "",
-    val badges: List<String> = emptyList()
+    val displayName: String = "John Doe",
+    val username: String = "12345",
+    val badges: List<String> = listOf("MVP", "Best Shooter", "Top Scorer")
 )

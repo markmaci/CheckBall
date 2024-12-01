@@ -23,7 +23,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             CheckBallTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ProfileScreen(userProfileViewModel = userProfileViewModel, modifier = Modifier.padding(innerPadding))
+                    UserProfileScreen(
+                        userProfile = userProfileViewModel.userProfile.value,
+                        modifier = Modifier.padding(innerPadding)
+                    )
                 }
             }
         }

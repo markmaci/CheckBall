@@ -14,14 +14,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.flowlayout.FlowRow
 
 @Composable
-fun UserProfileScreen(userProfile: UserProfile) {
+fun UserProfileScreen(userProfile: UserProfile, modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -35,23 +34,18 @@ fun UserProfileScreen(userProfile: UserProfile) {
                 .border(2.dp, Color.Gray, CircleShape),
             contentScale = ContentScale.Crop
         )
-
         Spacer(modifier = Modifier.height(16.dp))
-
         Text(
             text = userProfile.displayName,
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(top = 8.dp)
         )
-
         Text(
-            text = "@${userProfile.uid}",
+            text = "@${userProfile.username}",
             style = MaterialTheme.typography.bodySmall,
             color = Color.Gray
         )
-
         Spacer(modifier = Modifier.height(24.dp))
-
         BadgesSection(userProfile.badges)
     }
 }
@@ -69,7 +63,6 @@ fun BadgesSection(badges: List<String>) {
             text = "Badges",
             style = MaterialTheme.typography.titleMedium
         )
-
         Spacer(modifier = Modifier.height(8.dp))
 
         if (badges.isNotEmpty()) {
@@ -105,15 +98,4 @@ fun BadgeItem(badge: String) {
             style = MaterialTheme.typography.bodySmall
         )
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewUserProfile() {
-    val sampleUserProfile = UserProfile(
-        displayName = "John Doe",
-        uid = "johndoe123",
-        badges = listOf("Basketball Pro", "MVP", "Team Leader")
-    )
-    UserProfileScreen(userProfile = sampleUserProfile)
 }
