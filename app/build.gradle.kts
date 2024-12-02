@@ -103,7 +103,7 @@ dependencies {
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage.ktx)
     implementation(libs.firebase.analytics.ktx)
-    implementation(libs.firebase.crashlytics.ktx)
+//    implementation(libs.firebase.crashlytics.ktx)
 
     // Google Maps and Places
     implementation(libs.play.services.maps)
@@ -113,7 +113,7 @@ dependencies {
     // Navigation Component
     implementation(libs.androidx.navigation.compose)
 
-    // Accompanist Permissions
+    // Accompanist Permissifons
     implementation(libs.accompanist.permissions)
 
     // Hilt
