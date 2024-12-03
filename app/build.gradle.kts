@@ -1,7 +1,12 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+
     id("com.google.gms.google-services")
+
+    id("com.google.dagger.hilt.android") // Apply Hilt plugin
+    kotlin("kapt") // For annotation processing
+    id("com.google.firebase.crashlytics")
 }
 
 android {
@@ -30,7 +35,6 @@ android {
             )
         }
     }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -53,19 +57,14 @@ android {
 
 dependencies {
 
-    // Core dependencies
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-
-    // Compose dependencies
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-
-    // Testing dependencies
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -74,14 +73,18 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    // Firebase dependencies
+    // Import the Firebase BoM
     implementation(platform(libs.firebase.bom))
+
+    // Add the dependency for the Firebase SDK for Google Analytics
     implementation(libs.firebase.analytics)
+
+    // Firebase dependencies
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage.ktx)
     implementation(libs.firebase.analytics.ktx)
-    // implementation(libs.firebase.crashlytics.ktx)
+    implementation(libs.firebase.crashlytics.ktx)
 
     // Google Maps and Places
     implementation(libs.play.services.maps)
@@ -92,5 +95,18 @@ dependencies {
 
     // Accompanist Permissions
     implementation(libs.accompanist.permissions)
-    implementation(libs.accompanist.flowlayout)
+
+    // Hilt
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+
+    // Hilt Navigation Compose
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    // Google Play Services
+    implementation(libs.play.services.auth)
+
+    // Firebase Authentication
+    implementation(platform(libs.firebase.bom.v3211))
+    implementation(libs.google.firebase.auth.ktx)
 }
