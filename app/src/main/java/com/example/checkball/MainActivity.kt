@@ -10,10 +10,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
+import com.example.checkball.ui.BottomNavigationBar
 import com.example.checkball.ui.screen.LoginScreen
 import com.example.checkball.ui.screen.SignUpScreen
 import com.example.checkball.ui.screen.MainScreen
-import com.example.checkball.ui.BottomNavigationBar
+import com.example.checkball.ui.screen.HistoryScreen
+import com.example.checkball.ui.screen.HighlightsScreen
+import com.example.checkball.ui.screen.ProfileScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -44,9 +47,15 @@ fun AppNavigation() {
             startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
+            // Authentication Screens
             composable("login") { LoginScreen(navController) }
             composable("signup") { SignUpScreen(navController) }
+
+            // Main Navigation Screens
             composable("main") { MainScreen(navController) }
+            composable("gameDetails") { HistoryScreen() }
+            composable("communityFeed") { HighlightsScreen() }
+            composable("profile") { ProfileScreen() }
         }
     }
 }

@@ -2,20 +2,26 @@ package com.example.checkball.ui.screen
 
 import android.Manifest
 import android.annotation.SuppressLint
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.checkball.viewmodel.AuthViewModel
 import com.example.checkball.viewmodel.MapViewModel
+import com.example.checkball.viewmodel.Place
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.CameraPosition
 import com.google.maps.android.compose.*
+import com.google.android.gms.maps.model.CameraPosition
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -24,7 +30,6 @@ fun MainScreen(navController: NavController) {
     val mapViewModel: MapViewModel = hiltViewModel()
     val user by authViewModel.user.collectAsState()
 
-    // Permissions handling
     val locationPermissionsState = rememberMultiplePermissionsState(
         permissions = listOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
@@ -72,13 +77,16 @@ fun MainScreen(navController: NavController) {
             )
         },
         content = { padding ->
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
+
             ) {
                 if (hasLocationPermissions) {
-                    GoogleMapView(cameraPositionState = cameraPositionState, mapViewModel = mapViewModel)
+                    GoogleMapView(
+                        cameraPositionState = cameraPositionState,
+                        mapViewModel = mapViewModel
+                    )
                 } else {
                     Text(
                         text = "Location permissions are not granted.",
@@ -91,14 +99,18 @@ fun MainScreen(navController: NavController) {
     )
 }
 
-@SuppressLint("MissingPermission")
 @Composable
 fun GoogleMapView(
     cameraPositionState: CameraPositionState,
     mapViewModel: MapViewModel
 ) {
     val uiSettings = remember { MapUiSettings(zoomControlsEnabled = true) }
-    val properties = remember { MapProperties(isMyLocationEnabled = true) }
+    val properties = remember {
+        MapProperties(
+            isMyLocationEnabled = true,
+            mapType = MapType.SATELLITE
+        )
+    }
 
     GoogleMap(
         modifier = Modifier.fillMaxSize(),
@@ -110,5 +122,13 @@ fun GoogleMapView(
             state = MarkerState(position = mapViewModel.userLocation),
             title = "You are here"
         )
+
+        mapViewModel.basketballCourts.forEach { court ->
+            Marker(
+                state = MarkerState(position = court.location),
+                title = court.name
+            )
+        }
     }
 }
+

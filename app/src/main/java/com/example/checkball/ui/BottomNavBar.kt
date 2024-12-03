@@ -2,21 +2,20 @@ package com.example.checkball.ui
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.size
 import androidx.compose.ui.graphics.Color
-
-
-
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.Modifier
 
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
-    object Home : BottomNavItem("home", Icons.Default.Home, "Home")
+    object Home : BottomNavItem("main", Icons.Default.Home, "Home")
     object History : BottomNavItem("gameDetails", Icons.Default.Info, "History")
     object CommunityFeed : BottomNavItem("communityFeed", Icons.Default.List, "Highlights")
     object Profile : BottomNavItem("profile", Icons.Default.Person, "Profile")
@@ -30,26 +29,50 @@ fun BottomNavigationBar(navController: NavHostController) {
         BottomNavItem.CommunityFeed,
         BottomNavItem.Profile
     )
-    NavigationBar (
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    NavigationBar(
         containerColor = Color(0xFFF2EFDE),
-        tonalElevation = 8.dp,
-        modifier = Modifier
-            .clip(
-                RoundedCornerShape(
-                    topStart = 16.dp,
-                    topEnd = 16.dp,
-                    bottomStart = 0.dp,
-                    bottomEnd = 0.dp
-                )
-            )
-    ){
+        tonalElevation = 8.dp
+    ) {
         items.forEach { item ->
             NavigationBarItem(
-                icon = { Icon(item.icon, contentDescription = item.label) },
-                label = { Text(item.label) },
-                selected = navController.currentBackStackEntry?.destination?.route == item.route,
-                onClick = { navController.navigate(item.route) }
+                icon = {
+                    Icon(
+                        item.icon,
+                        contentDescription = item.label,
+                        modifier = Modifier.size(32.dp)
+                    )
+                },
+                label = {
+                    Text(
+                        item.label,
+                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp)
+                    )
+                },
+                selected = currentRoute == item.route,
+                onClick = {
+                    if (currentRoute != item.route) {
+                        navController.navigate(item.route) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color(0xFF000000),
+                    unselectedIconColor = Color(0xFF757575),
+                    selectedTextColor = Color(0xFF000000),
+                    unselectedTextColor = Color(0xFF757575),
+                    indicatorColor = Color.Transparent
+                )
             )
         }
     }
 }
+
