@@ -8,21 +8,28 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 
 @Composable
 fun MatchHistoryScreen(
+    userId: String,
     onBackClick: () -> Unit,
     matchHistoryViewModel: MatchHistoryViewModel
 ) {
     val matches = matchHistoryViewModel.matchHistory.collectAsState().value
+    val isLoading = matchHistoryViewModel.isLoading.collectAsState().value
+
+    LaunchedEffect(userId) {
+        matchHistoryViewModel.fetchMatchHistory(userId)
+    }
 
     Column(
         modifier = Modifier
@@ -50,16 +57,23 @@ fun MatchHistoryScreen(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-        ) {
-            matches.forEach { match ->
-                MatchCard(match)
-                Spacer(modifier = Modifier.height(16.dp))
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                matches.forEach { match ->
+                    MatchCard(match)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
         }
     }
@@ -80,47 +94,14 @@ fun MatchCard(match: Match) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text(
-                    text = match.date,
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Opponent: ${match.opponent}",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Result: ${match.result} (${match.score})",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
-                )
+                Text(text = match.date, style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black))
+                Text(text = "Opponent: ${match.opponent}", style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black))
+                Text(text = "Result: ${match.result} (${match.score})", style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black))
             }
-
-            Column(
-                horizontalAlignment = Alignment.End
-            ) {
-                Text(
-                    text = "Points Scored: ${match.pointsScored}",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Assists: ${match.assists}",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Rebounds: ${match.rebounds}",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
-                )
+            Column(horizontalAlignment = Alignment.End) {
+                Text(text = "Points Scored: ${match.pointsScored}", style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black))
+                Text(text = "Assists: ${match.assists}", style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black))
+                Text(text = "Rebounds: ${match.rebounds}", style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black))
             }
         }
     }

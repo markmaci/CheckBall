@@ -1,33 +1,31 @@
 package com.example.checkball
 
 import androidx.lifecycle.ViewModel
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 class MatchHistoryViewModel : ViewModel() {
+    private val firestore = FirebaseFirestore.getInstance()
+
     private val _matchHistory = MutableStateFlow<List<Match>>(emptyList())
     val matchHistory: StateFlow<List<Match>> = _matchHistory
 
-    init {
-        _matchHistory.value = listOf(
-            Match(
-                opponent = "Team A",
-                score = "100-90",
-                date = "2024-11-01",
-                result = "Win",
-                pointsScored = 20,
-                assists = 5,
-                rebounds = 10
-            ),
-            Match(
-                opponent = "Team B",
-                score = "80-95",
-                date = "2024-11-05",
-                result = "Loss",
-                pointsScored = 18,
-                assists = 7,
-                rebounds = 12
-            )
-        )
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    fun fetchMatchHistory(userId: String) {
+        _isLoading.value = true
+        firestore.collection("matches")
+            .whereEqualTo("userId", userId)
+            .get()
+            .addOnSuccessListener { documents ->
+                val matches = documents.mapNotNull { it.toObject(Match::class.java) }
+                _matchHistory.value = matches
+                _isLoading.value = false
+            }
+            .addOnFailureListener {
+                _isLoading.value = false
+            }
     }
 }

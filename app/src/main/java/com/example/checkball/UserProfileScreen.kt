@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
@@ -17,26 +19,14 @@ import androidx.compose.material.icons.filled.Person
 
 @Composable
 fun UserProfileScreen(
-    onViewMatchHistoryClick: () -> Unit
+    onViewMatchHistoryClick: () -> Unit,
+    userProfileViewModel: UserProfileViewModel
 ) {
-    val userProfile = UserProfile(
-        displayName = "John Doe",
-        uid = "12345",
-        username = "john_doe123",
-        location = "Boston, MA",
-        height = "6'2\"",
-        weight = "190 lbs",
-        preferredPosition = "Point Guard",
-        favoriteCourt = "Brookline Court",
-        recentStats = RecentStats(
-            wins = 10,
-            losses = 5,
-            pointsScored = 250,
-            assists = 100,
-            rebounds = 50
-        ),
-        badges = listOf("MVP", "Sharpshooter", "Defender of the Year")
-    )
+    val userProfile = userProfileViewModel.userProfile.collectAsState().value
+
+    LaunchedEffect(Unit) {
+        userProfileViewModel.fetchUserProfile()
+    }
 
     Column(
         modifier = Modifier
