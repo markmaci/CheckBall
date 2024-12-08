@@ -47,11 +47,9 @@ fun AppNavigation() {
             startDestination = startDestination,
             modifier = Modifier.padding(innerPadding)
         ) {
-            // Authentication Screens
             composable("login") { LoginScreen(navController) }
             composable("signup") { SignUpScreen(navController) }
 
-            // Main Navigation Screens
             composable("main") { MainScreen(navController) }
             composable("gameDetails") { HistoryScreen() }
             composable("communityFeed") { HighlightsScreen() }

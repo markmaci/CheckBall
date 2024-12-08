@@ -2,26 +2,30 @@ package com.example.checkball.ui.screen
 
 import android.Manifest
 import android.annotation.SuppressLint
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.checkball.viewmodel.AuthViewModel
 import com.example.checkball.viewmodel.MapViewModel
 import com.example.checkball.viewmodel.Place
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.maps.android.compose.*
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.CameraUpdateFactory
+import android.util.Log
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -50,12 +54,12 @@ fun MainScreen(navController: NavController) {
     }
 
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(mapViewModel.userLocation, 12f)
+        position = CameraPosition.fromLatLngZoom(mapViewModel.cameraLocation, 12f)
     }
 
-    LaunchedEffect(mapViewModel.userLocation) {
+    LaunchedEffect(mapViewModel.cameraLocation) {
         cameraPositionState.animate(
-            update = CameraUpdateFactory.newLatLngZoom(mapViewModel.userLocation, 12f),
+            update = CameraUpdateFactory.newLatLngZoom(mapViewModel.cameraLocation, mapViewModel.zoomLevel),
             durationMs = 1000
         )
     }
@@ -77,23 +81,29 @@ fun MainScreen(navController: NavController) {
             )
         },
         content = { padding ->
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-
+                    .padding(padding)
             ) {
-                if (hasLocationPermissions) {
-                    GoogleMapView(
-                        cameraPositionState = cameraPositionState,
-                        mapViewModel = mapViewModel
-                    )
-                } else {
-                    Text(
-                        text = "Location permissions are not granted.",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.padding(16.dp)
-                    )
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                ) {
+                    if (hasLocationPermissions) {
+                        GoogleMapView(
+                            cameraPositionState = cameraPositionState,
+                            mapViewModel = mapViewModel
+                        )
+                    } else {
+                        Text(
+                            text = "Location permissions are not granted.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
                 }
+                CourtDetailsRow(mapViewModel = mapViewModel)
             }
         }
     )
@@ -108,7 +118,7 @@ fun GoogleMapView(
     val properties = remember {
         MapProperties(
             isMyLocationEnabled = true,
-            mapType = MapType.SATELLITE
+            mapType = MapType.NORMAL
         )
     }
 
@@ -118,11 +128,6 @@ fun GoogleMapView(
         uiSettings = uiSettings,
         properties = properties
     ) {
-        Marker(
-            state = MarkerState(position = mapViewModel.userLocation),
-            title = "You are here"
-        )
-
         mapViewModel.basketballCourts.forEach { court ->
             Marker(
                 state = MarkerState(position = court.location),
@@ -132,3 +137,73 @@ fun GoogleMapView(
     }
 }
 
+@Composable
+fun CourtDetailsRow(mapViewModel: MapViewModel) {
+    val courts = mapViewModel.basketballCourts
+
+    if (courts.isNotEmpty()) {
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            itemsIndexed(courts) { index, court ->
+                CourtDetailCard(
+                    court = court,
+                    index = index
+                )
+            }
+        }
+    } else {
+        Text(
+            text = "No basketball courts found.",
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodyLarge
+        )
+    }
+}
+
+@Composable
+fun CourtDetailCard(court: Place, index: Int) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(180.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(8.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            AsyncImage(
+                model = "https://via.placeholder.com/150",
+                contentDescription = "Image of ${court.name}",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+            )
+            Text(
+                text = court.name,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1
+            )
+            Text(
+                text = "Address: ${court.location.latitude}, ${court.location.longitude}",
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1
+            )
+            Text(
+                text = "Hours: Open 6 AM - 10 PM", // Placeholder
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
