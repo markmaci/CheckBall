@@ -12,9 +12,10 @@ import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URL
@@ -39,7 +40,12 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
     var basketballCourts by mutableStateOf<List<Place>>(emptyList())
         private set
 
+    var selectedCourt by mutableStateOf<Place?>(null)
+        private set
+
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+
+    private var debounceJob: Job? = null
 
     @SuppressLint("MissingPermission")
     fun fetchUserLocation() {
@@ -69,6 +75,21 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
 
     fun startFetchingCourts() {
         fetchBasketballCourts()
+    }
+
+    fun onCameraMoved(newCameraLocation: LatLng, newZoomLevel: Float) {
+        viewModelScope.launch {
+            debounceJob?.cancel()
+            debounceJob = launch {
+                delay(500)
+                Log.d("MapViewModel", "Camera moved to: $newCameraLocation, Zoom: $newZoomLevel")
+
+                cameraLocation = newCameraLocation
+                zoomLevel = newZoomLevel
+
+                fetchBasketballCourts()
+            }
+        }
     }
 
     fun fetchBasketballCourts() {
@@ -102,14 +123,23 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
                     }
 
                     nextPageToken = jsonResponse.optString("next_page_token", null)
-                    if (nextPageToken != null) kotlinx.coroutines.delay(2000)
+                    if (nextPageToken != null) kotlinx.coroutines.delay(2000) // Delay for API rate limits
                 } catch (e: Exception) {
+                    Log.e("MapViewModel", "Error fetching basketball courts: ${e.message}")
                     break
                 }
             } while (nextPageToken != null)
 
             basketballCourts = allCourts
+            Log.d("MapViewModel", "Fetched ${allCourts.size} basketball courts")
+            Toast.makeText(context, "Fetched ${allCourts.size} basketball courts", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    fun selectCourt(court: Place) {
+        selectedCourt = court
+        basketballCourts = basketballCourts.sortedByDescending { it == court }
+        Log.d("MapViewModel", "Selected court: ${court.name}, moved to top of list")
     }
 
     private fun hasLocationPermission(): Boolean {

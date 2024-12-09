@@ -36,11 +36,11 @@ fun AppNavigation() {
     val startDestination = if (isLoggedIn) "main" else "login"
 
     Scaffold(
-        bottomBar = {
-            if (isLoggedIn) {
-                BottomNavigationBar(navController)
-            }
-        }
+//        bottomBar = {
+//            if (isLoggedIn) {
+//                BottomNavigationBar(navController)
+//            }
+//        }
     ) { innerPadding ->
         NavHost(
             navController = navController,
