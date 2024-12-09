@@ -1,19 +1,15 @@
 package com.example.checkball.ui.screen
 
 import android.Manifest
-import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
@@ -23,9 +19,8 @@ import com.example.checkball.viewmodel.Place
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.maps.android.compose.*
-import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.CameraUpdateFactory
-import android.util.Log
+import com.google.android.gms.maps.model.CameraPosition
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -54,14 +49,18 @@ fun MainScreen(navController: NavController) {
     }
 
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(mapViewModel.cameraLocation, 12f)
+        position = CameraPosition.fromLatLngZoom(mapViewModel.cameraLocation, mapViewModel.zoomLevel)
     }
 
-    LaunchedEffect(mapViewModel.cameraLocation) {
-        cameraPositionState.animate(
-            update = CameraUpdateFactory.newLatLngZoom(mapViewModel.cameraLocation, mapViewModel.zoomLevel),
-            durationMs = 1000
-        )
+    // Animate camera to user's location only once
+    LaunchedEffect(mapViewModel.cameraInitialized) {
+        if (mapViewModel.cameraInitialized) {
+            cameraPositionState.animate(
+                update = CameraUpdateFactory.newLatLngZoom(mapViewModel.cameraLocation, mapViewModel.zoomLevel),
+                durationMs = 1000
+            )
+            mapViewModel.startFetchingCourts() // Trigger court fetching after animation
+        }
     }
 
     Scaffold(
@@ -161,7 +160,7 @@ fun CourtDetailsRow(mapViewModel: MapViewModel) {
             text = "No basketball courts found.",
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(20.dp),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodyLarge
         )
