@@ -31,7 +31,7 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
     var cameraLocation by mutableStateOf(LatLng(40.7128, -74.0060)) // Default to NYC
         private set
 
-    var zoomLevel by mutableStateOf(15f)
+    var zoomLevel by mutableFloatStateOf(15f)
         private set
 
     var cameraInitialized by mutableStateOf(false)
@@ -92,7 +92,7 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
         }
     }
 
-    fun fetchBasketballCourts() {
+    private fun fetchBasketballCourts() {
         val radius = calculateRadius(zoomLevel)
         val apiKey = BuildConfig.API_KEY
         val baseUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
@@ -119,11 +119,42 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
                         val location = result.getJSONObject("geometry").getJSONObject("location")
                         val lat = location.getDouble("lat")
                         val lng = location.getDouble("lng")
-                        allCourts.add(Place(name, LatLng(lat, lng)))
+                        val address = result.optString("vicinity")
+                        val phoneNumber = result.optString("formatted_phone_number", null)
+                        val website = result.optString("website", null)
+                        val rating = result.optDouble("rating", Double.NaN).takeIf { !it.isNaN() }?.toFloat()
+                        val userRatingsTotal = result.optInt("user_ratings_total", 0)
+                        val photos = result.optJSONArray("photos")?.let { photosArray ->
+                            List(photosArray.length()) { photosArray.getJSONObject(it).optString("photo_reference") }
+                        }
+                        val openingHours = result.optJSONObject("opening_hours")?.let { hours ->
+                            OpeningHours(
+                                openNow = hours.optBoolean("open_now", false),
+                                weekdayText = hours.optJSONArray("weekday_text")?.let { weekdayArray ->
+                                    List(weekdayArray.length()) { weekdayArray.getString(it) }
+                                }
+                            )
+                        }
+
+                        Log.d("MapViewModel", "Court: $name, Photos: ${photos?.size ?: 0}")
+
+                        allCourts.add(
+                            Place(
+                                name = name,
+                                location = LatLng(lat, lng),
+                                address = address,
+                                phoneNumber = phoneNumber,
+                                website = website,
+                                rating = rating,
+                                userRatingsTotal = userRatingsTotal,
+                                photoReferences = photos,
+                                openingHours = openingHours
+                            )
+                        )
                     }
 
                     nextPageToken = jsonResponse.optString("next_page_token", null)
-                    if (nextPageToken != null) kotlinx.coroutines.delay(2000) // Delay for API rate limits
+                    if (nextPageToken != null) kotlinx.coroutines.delay(2000)
                 } catch (e: Exception) {
                     Log.e("MapViewModel", "Error fetching basketball courts: ${e.message}")
                     break
@@ -157,4 +188,19 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
     }
 }
 
-data class Place(val name: String, val location: LatLng)
+data class Place(
+    val name: String,
+    val location: LatLng,
+    val address: String? = null,
+    val phoneNumber: String? = null,
+    val website: String? = null,
+    val rating: Float? = null,
+    val userRatingsTotal: Int? = null,
+    val photoReferences: List<String>? = null,
+    val openingHours: OpeningHours? = null
+)
+
+data class OpeningHours(
+    val openNow: Boolean,
+    val weekdayText: List<String>? = null
+)

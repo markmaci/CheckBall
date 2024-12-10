@@ -13,6 +13,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import com.example.checkball.R
+
+val lacquierRegular = FontFamily(
+    Font(R.font.lacquerregular, FontWeight.Normal)
+)
 
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
     object Home : BottomNavItem("main", Icons.Default.Home, "Home")
@@ -49,7 +57,10 @@ fun BottomNavigationBar(navController: NavHostController) {
                 label = {
                     Text(
                         item.label,
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp)
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontSize = 14.sp,
+                            fontFamily = lacquierRegular
+                        )
                     )
                 },
                 selected = currentRoute == item.route,
