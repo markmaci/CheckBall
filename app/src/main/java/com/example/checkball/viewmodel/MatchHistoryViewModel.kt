@@ -1,6 +1,7 @@
-package com.example.checkball
+package com.example.checkball.viewmodel
 
 import androidx.lifecycle.ViewModel
+import com.example.checkball.di.Match
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

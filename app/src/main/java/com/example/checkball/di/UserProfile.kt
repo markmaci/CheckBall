@@ -1,4 +1,4 @@
-package com.example.checkball
+package com.example.checkball.di
 
 data class UserProfile(
     val displayName: String = "",

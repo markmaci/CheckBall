@@ -8,6 +8,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.checkball.ui.screen.MainScreen
 import com.example.checkball.ui.screen.LoginScreen
+import com.example.checkball.ui.screen.SignUpScreen
+import com.example.checkball.ui.screen.MatchHistoryScreen
+import com.example.checkball.ui.screen.HighlightsScreen
+import com.example.checkball.ui.screen.UserProfileScreen
+import com.example.checkball.viewmodel.MatchHistoryViewModel
+import com.example.checkball.viewmodel.UserProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -30,6 +36,9 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         composable("login") {
             LoginScreen(navController = navController)
         }
+        composable("signup") {
+            SignUpScreen(navController = navController)
+        }
         composable("user_profile_screen") {
             UserProfileScreen(
                 onViewMatchHistoryClick = {
@@ -46,6 +55,9 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                     matchHistoryViewModel = matchHistoryViewModel
                 )
             }
+        }
+        composable("communityFeed") {
+            HighlightsScreen(navController = navController)
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.example.checkball
+package com.example.checkball.ui.screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
+import com.example.checkball.viewmodel.UserProfileViewModel
 
 @Composable
 fun UserProfileScreen(
