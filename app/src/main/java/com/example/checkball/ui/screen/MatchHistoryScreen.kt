@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.Alignment
-import com.example.checkball.di.Match
+import com.example.checkball.data.model.Match
 import com.example.checkball.viewmodel.MatchHistoryViewModel
 
 @Composable

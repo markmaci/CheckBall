@@ -4,8 +4,8 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.checkball.di.UserProfile
-import com.example.checkball.repository.UserProfileRepository
+import com.example.checkball.data.model.UserProfile
+import com.example.checkball.data.repository.UserProfileRepository
 import com.example.checkball.di.FirestoreService
 import kotlinx.coroutines.launch
 

@@ -15,8 +15,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import com.example.checkball.viewmodel.UserProfileViewModel
-import com.example.checkball.di.UserProfile
-import com.example.checkball.di.RecentStats
+import com.example.checkball.data.model.UserProfile
+import com.example.checkball.data.model.RecentStats
 import com.example.checkball.viewmodel.SaveProfileStatus
 
 @Composable

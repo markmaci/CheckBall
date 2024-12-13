@@ -1,4 +1,4 @@
-package com.example.checkball.di
+package com.example.checkball.data.model
 
 data class Match(
     val date: String = "",

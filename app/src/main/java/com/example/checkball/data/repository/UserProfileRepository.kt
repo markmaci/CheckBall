@@ -1,6 +1,6 @@
-package com.example.checkball.repository
+package com.example.checkball.data.repository
 
-import com.example.checkball.di.UserProfile
+import com.example.checkball.data.model.UserProfile
 import com.example.checkball.di.FirestoreService
 
 class UserProfileRepository(private val firestoreService: FirestoreService) {

@@ -32,8 +32,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.Dialog
 import com.example.checkball.R
 import com.google.firebase.firestore.FirebaseFirestore
-import com.example.checkball.di.UserProfile
-import com.example.checkball.di.RecentStats
+import com.example.checkball.data.model.UserProfile
+import com.example.checkball.data.model.RecentStats
 
 val lacquierRegular = FontFamily(
     Font(R.font.lacquerregular, FontWeight.Normal)

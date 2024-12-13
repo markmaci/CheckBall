@@ -5,7 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.checkball.di.UserProfile
+import com.example.checkball.data.model.UserProfile
 import com.example.checkball.viewmodel.SaveProfileStatus
 import com.example.checkball.viewmodel.UserProfileViewModel
 

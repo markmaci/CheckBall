@@ -1,5 +1,6 @@
 package com.example.checkball.di
 
+import com.example.checkball.data.model.UserProfile
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
