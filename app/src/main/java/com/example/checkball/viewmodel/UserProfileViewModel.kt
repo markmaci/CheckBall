@@ -1,30 +1,48 @@
 package com.example.checkball.viewmodel
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.checkball.di.UserProfile
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import com.example.checkball.repository.UserProfileRepository
+import com.example.checkball.di.FirestoreService
+import kotlinx.coroutines.launch
 
-class UserProfileViewModel : ViewModel() {
+class UserProfileViewModel(
+    private val userProfileRepository: UserProfileRepository = UserProfileRepository(FirestoreService())
+) : ViewModel() {
 
-    private val firestore = FirebaseFirestore.getInstance()
+    private val _saveProfileStatus = mutableStateOf<SaveProfileStatus>(SaveProfileStatus.Idle)
+    val saveProfileStatus: State<SaveProfileStatus> = _saveProfileStatus
 
-    private val _userProfile = MutableStateFlow(UserProfile())
-    val userProfile: StateFlow<UserProfile> get() = _userProfile
-
-    fun fetchUserProfile() {
-        val userId = "12345"
-        firestore.collection("users")
-            .document(userId)
-            .get()
-            .addOnSuccessListener { document ->
-                if (document != null) {
-                    _userProfile.value = document.toObject(UserProfile::class.java) ?: UserProfile()
-                }
+    fun saveUserProfile(userProfile: UserProfile) {
+        _saveProfileStatus.value = SaveProfileStatus.Loading
+        viewModelScope.launch {
+            try {
+                userProfileRepository.saveUserProfile(userProfile)
+                _saveProfileStatus.value = SaveProfileStatus.Success
+            } catch (e: Exception) {
+                _saveProfileStatus.value = SaveProfileStatus.Failure(e.message ?: "An unknown error occurred")
             }
-            .addOnFailureListener {
-                _userProfile.value = UserProfile()
-            }
+        }
     }
+
+    fun getUserProfile(callback: (UserProfile?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val profile = userProfileRepository.getUserProfile()
+                callback(profile)
+            } catch (e: Exception) {
+                callback(null)
+            }
+        }
+    }
+}
+
+sealed class SaveProfileStatus {
+    data object Idle : SaveProfileStatus()
+    data object Loading : SaveProfileStatus()
+    data object Success : SaveProfileStatus()
+    data class Failure(val message: String) : SaveProfileStatus()
 }

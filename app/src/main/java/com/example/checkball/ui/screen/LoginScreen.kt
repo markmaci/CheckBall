@@ -1,4 +1,5 @@
-// LoginScreen.kt
+@file:Suppress("DEPRECATION")
+
 package com.example.checkball.ui.screen
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -29,10 +30,9 @@ fun LoginScreen(navController: NavController) {
 
     val context = LocalContext.current
 
-    // Configure Google Sign-In
     val gso = remember {
         GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken("642706962641-6rvd0slpvv4lu3fourdqpko9csrpl2kc.apps.googleusercontent.com") // Replace with your Web Client ID
+            .requestIdToken("642706962641-6rvd0slpvv4lu3fourdqpko9csrpl2kc.apps.googleusercontent.com")
             .requestEmail()
             .build()
     }
@@ -41,7 +41,6 @@ fun LoginScreen(navController: NavController) {
         GoogleSignIn.getClient(context, gso)
     }
 
-    // Launcher for Google Sign-In
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -58,7 +57,6 @@ fun LoginScreen(navController: NavController) {
         }
     }
 
-    // Navigate to the main screen when the user logs in successfully
     LaunchedEffect(user) {
         if (user != null) {
             navController.navigate("main") {
@@ -67,7 +65,6 @@ fun LoginScreen(navController: NavController) {
         }
     }
 
-    // Display error messages if any
     val snackbarHostState = remember { SnackbarHostState() }
     errorMessage?.let { message ->
         LaunchedEffect(message) {

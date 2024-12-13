@@ -1,5 +1,6 @@
 package com.example.checkball.ui.screen
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -16,8 +17,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.checkball.viewmodel.Place
 import com.example.checkball.BuildConfig
-import com.example.checkball.R
 
+@SuppressLint("DefaultLocale")
 @Composable
 fun CourtDetailsScreen(
     court: Place?,

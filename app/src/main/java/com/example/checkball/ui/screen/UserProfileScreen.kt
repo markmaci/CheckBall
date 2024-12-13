@@ -3,9 +3,7 @@ package com.example.checkball.ui.screen
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
@@ -17,16 +15,24 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import com.example.checkball.viewmodel.UserProfileViewModel
+import com.example.checkball.di.UserProfile
+import com.example.checkball.di.RecentStats
+import com.example.checkball.viewmodel.SaveProfileStatus
 
 @Composable
 fun UserProfileScreen(
     onViewMatchHistoryClick: () -> Unit,
-    userProfileViewModel: UserProfileViewModel
+    userProfileViewModel: UserProfileViewModel,
+    onSaveProfile: (UserProfile) -> Unit,
+    userID: String
 ) {
-    val userProfile = userProfileViewModel.userProfile.collectAsState().value
+    val saveProfileStatus by userProfileViewModel.saveProfileStatus
+    var userProfile by remember { mutableStateOf<UserProfile?>(null) }
 
     LaunchedEffect(Unit) {
-        userProfileViewModel.fetchUserProfile()
+        userProfileViewModel.getUserProfile { profile ->
+            userProfile = profile
+        }
     }
 
     Column(
@@ -36,7 +42,7 @@ fun UserProfileScreen(
             .background(Color.White)
     ) {
         Text(
-            text = userProfile.displayName,
+            text = userProfile?.displayName?.ifEmpty { "No Name" } ?: "Loading...",
             style = MaterialTheme.typography.titleLarge.copy(color = Color.Black),
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center
@@ -65,7 +71,7 @@ fun UserProfileScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = "@${userProfile.username}",
+                text = "@${userProfile?.username?.ifEmpty { "No Username" } ?: "Loading..."}",
                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black),
                 textAlign = TextAlign.Center
             )
@@ -73,7 +79,7 @@ fun UserProfileScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = userProfile.location,
+                text = userProfile?.location?.ifEmpty { "No Location" } ?: "Loading...",
                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black),
                 textAlign = TextAlign.Center
             )
@@ -96,158 +102,239 @@ fun UserProfileScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text(
-            text = "Player Information",
-            style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Start
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = userProfile.height,
-                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black, fontWeight = FontWeight.Bold)
-                )
-                Text(
-                    text = "Height",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
-                )
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = userProfile.weight,
-                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black, fontWeight = FontWeight.Bold)
-                )
-                Text(
-                    text = "Weight",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
-                )
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = userProfile.preferredPosition,
-                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black, fontWeight = FontWeight.Bold)
-                )
-                Text(
-                    text = "Position",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
-                )
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = userProfile.favoriteCourt,
-                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black, fontWeight = FontWeight.Bold)
-                )
-                Text(
-                    text = "Favorite Court",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
-                )
-            }
-        }
+        userProfile?.let { PlayerInformationSection(userProfile = it) }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text(
-            text = "Recent Stats",
-            style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Start
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "${userProfile.recentStats.wins}",
-                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black, fontWeight = FontWeight.Bold)
-                )
-                Text(
-                    text = "Wins",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
-                )
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "${userProfile.recentStats.losses}",
-                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black, fontWeight = FontWeight.Bold)
-                )
-                Text(
-                    text = "Losses",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
-                )
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "${userProfile.recentStats.pointsScored}",
-                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black, fontWeight = FontWeight.Bold)
-                )
-                Text(
-                    text = "Points",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
-                )
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "${userProfile.recentStats.assists}",
-                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black, fontWeight = FontWeight.Bold)
-                )
-                Text(
-                    text = "Assists",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
-                )
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "${userProfile.recentStats.rebounds}",
-                    style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black, fontWeight = FontWeight.Bold)
-                )
-                Text(
-                    text = "Rebounds",
-                    style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
-                )
-            }
-        }
+        RecentStatsSection(recentStats = userProfile?.recentStats ?: RecentStats())
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text(
-            text = "Badges",
-            style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
-            modifier = Modifier.fillMaxWidth(),
-            textAlign = TextAlign.Start
-        )
+        BadgesSection(badges = userProfile?.badges ?: emptyList())
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            userProfile.badges.forEach { badge ->
-                Box(
-                    modifier = Modifier
-                        .background(Color(0xFFFF6F00), shape = RoundedCornerShape(16.dp))
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    Text(
-                        text = badge,
-                        style = TextStyle(color = Color.White),
-                        textAlign = TextAlign.Center
-                    )
-                }
+        when (saveProfileStatus) {
+            SaveProfileStatus.Loading -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    color = Color(0xFF00796B)
+                )
             }
+            SaveProfileStatus.Success -> {
+                Text(
+                    text = "Profile saved successfully!",
+                    color = Color.Green,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            }
+            is SaveProfileStatus.Failure -> {
+                Text(
+                    text = "Error saving profile: ${(saveProfileStatus as SaveProfileStatus.Failure).message}",
+                    color = Color.Red,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            }
+            else -> {}
         }
 
         Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = {
+                userProfile?.let { onSaveProfile(it) }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00796B))
+        ) {
+            Text(
+                text = "Save Changes",
+                style = MaterialTheme.typography.bodyLarge.copy(color = Color.White)
+            )
+        }
+    }
+}
+
+@Composable
+fun PlayerInformationSection(userProfile: UserProfile) {
+    Text(
+        text = "Player Information",
+        style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
+        modifier = Modifier.fillMaxWidth(),
+        textAlign = TextAlign.Start
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = userProfile.height.ifEmpty { "N/A" },
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+            Text(
+                text = "Height",
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
+            )
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = userProfile.weight.ifEmpty { "N/A" },
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+            Text(
+                text = "Weight",
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
+            )
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = userProfile.preferredPosition.ifEmpty { "N/A" },
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+            Text(
+                text = "Position",
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
+            )
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = userProfile.favoriteCourt.ifEmpty { "N/A" },
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+            Text(
+                text = "Favorite Court",
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
+            )
+        }
+    }
+}
+
+@Composable
+fun RecentStatsSection(recentStats: RecentStats) {
+    Text(
+        text = "Recent Stats",
+        style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
+        modifier = Modifier.fillMaxWidth(),
+        textAlign = TextAlign.Start
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "${recentStats.wins}",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+            Text(
+                text = "Wins",
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
+            )
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "${recentStats.losses}",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+            Text(
+                text = "Losses",
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
+            )
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "${recentStats.pointsScored}",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+            Text(
+                text = "Points",
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
+            )
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "${recentStats.assists}",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+            Text(
+                text = "Assists",
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
+            )
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = "${recentStats.rebounds}",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = Color.Black,
+                    fontWeight = FontWeight.Bold
+                )
+            )
+            Text(
+                text = "Rebounds",
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black)
+            )
+        }
+    }
+}
+
+@Composable
+fun BadgesSection(badges: List<String>) {
+    Text(
+        text = "Badges",
+        style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
+        modifier = Modifier.fillMaxWidth(),
+        textAlign = TextAlign.Start
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        badges.forEach { badge ->
+            Box(
+                modifier = Modifier
+                    .background(Color(0xFFFF6F00), shape = RoundedCornerShape(16.dp))
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = badge,
+                    style = TextStyle(color = Color.White),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
     }
 }

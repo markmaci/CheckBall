@@ -1,4 +1,5 @@
-// SignUpScreen.kt
+@file:Suppress("DEPRECATION")
+
 package com.example.checkball.ui.screen
 
 import android.app.Activity
@@ -32,10 +33,8 @@ fun SignUpScreen(navController: NavController) {
 
     val context = LocalContext.current
 
-    // Google Sign-In client
     val oneTapClient = remember { Identity.getSignInClient(context) }
 
-    // Google Sign-In request
     val signInRequest = remember {
         BeginSignInRequest.builder()
             .setGoogleIdTokenRequestOptions(
@@ -49,7 +48,6 @@ fun SignUpScreen(navController: NavController) {
             .build()
     }
 
-    // Launcher for Google Sign-In
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
@@ -70,16 +68,14 @@ fun SignUpScreen(navController: NavController) {
         }
     }
 
-    // Navigate to the main screen when the user signs up successfully
     LaunchedEffect(user) {
         if (user != null) {
-            navController.navigate("main") {
+            navController.navigate("login") {
                 popUpTo("signup") { inclusive = true }
             }
         }
     }
 
-    // Display error messages if any
     val snackbarHostState = remember { SnackbarHostState() }
     errorMessage?.let { message ->
         LaunchedEffect(message) {
