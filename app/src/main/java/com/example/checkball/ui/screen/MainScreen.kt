@@ -32,9 +32,6 @@ import androidx.compose.ui.text.font.FontWeight
 import com.example.checkball.R
 import androidx.compose.ui.Alignment
 
-val lacquierRegular = FontFamily(
-    Font(R.font.lacquerregular, FontWeight.Normal)
-)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
@@ -84,7 +81,11 @@ fun MainScreen(navController: NavHostController) {
 
     var selectedCourt by remember { mutableStateOf<Place?>(null) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF2EFDE))
+    ) {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -98,7 +99,10 @@ fun MainScreen(navController: NavHostController) {
                         }) {
                             Text("Log Out")
                         }
-                    }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Red
+                    )
                 )
             },
             bottomBar = {
