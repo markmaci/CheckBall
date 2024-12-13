@@ -53,7 +53,6 @@ fun AppNavigation() {
         ) {
             composable("login") { LoginScreen(navController) }
             composable("signup") { SignUpScreen(navController) }
-
             composable("main") { MainScreen(navController) }
             composable("gameDetails") { HistoryScreen() }
             composable("communityFeed") { HighlightsScreen() }
@@ -63,8 +62,7 @@ fun AppNavigation() {
                         onViewMatchHistoryClick = { navController.navigate("match_history_screen") },
                         userProfileViewModel = userProfileViewModel,
                         userID = it,
-                        onSaveProfile = { /* Placeholder lambda for on-save functionality */ }
-
+                        navController = navController
                     )
                 }
             }
