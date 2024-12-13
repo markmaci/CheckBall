@@ -51,9 +51,9 @@ fun AppNavigation() {
             composable("signup") { SignUpScreen(navController) }
 
             composable("main") { MainScreen(navController) }
-            composable("gameDetails") { HistoryScreen(navController) }
-            composable("communityFeed") { HighlightsScreen(navController) }
-            composable("profile") { ProfileScreen(navController) }
+            composable("gameDetails") { HistoryScreen() }
+            composable("communityFeed") { HighlightsScreen() }
+            composable("profile") { ProfileScreen() }
         }
     }
 }

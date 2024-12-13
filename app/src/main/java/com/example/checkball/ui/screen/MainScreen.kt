@@ -16,7 +16,6 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.maps.android.compose.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
-import com.example.checkball.ui.BottomNavigationBar
 import com.example.checkball.viewmodel.AuthViewModel
 import com.example.checkball.viewmodel.MapViewModel
 import com.example.checkball.viewmodel.Place
@@ -104,9 +103,6 @@ fun MainScreen(navController: NavHostController) {
                         containerColor = Color.Red
                     )
                 )
-            },
-            bottomBar = {
-                BottomNavigationBar(navController = navController)
             },
             content = { padding ->
                 Column(
@@ -270,8 +266,3 @@ fun CourtDetailCard(
         }
     }
 }
-
-
-
-
-
