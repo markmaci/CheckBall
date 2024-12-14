@@ -4,7 +4,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.checkball.data.model.UserProfile
+import com.example.checkball.data.model.User
 import com.example.checkball.data.repository.UserProfileRepository
 import com.example.checkball.di.FirestoreService
 import kotlinx.coroutines.launch
@@ -16,7 +16,7 @@ class UserProfileViewModel(
     private val _saveProfileStatus = mutableStateOf<SaveProfileStatus>(SaveProfileStatus.Idle)
     val saveProfileStatus: State<SaveProfileStatus> = _saveProfileStatus
 
-    fun saveUserProfile(userProfile: UserProfile) {
+    fun saveUserProfile(userProfile: User) {
         _saveProfileStatus.value = SaveProfileStatus.Loading
         viewModelScope.launch {
             try {
@@ -28,7 +28,7 @@ class UserProfileViewModel(
         }
     }
 
-    fun getUserProfile(callback: (UserProfile?) -> Unit) {
+    fun getUserProfile(callback: (User?) -> Unit) {
         viewModelScope.launch {
             try {
                 val profile = userProfileRepository.getUserProfile()

@@ -57,12 +57,15 @@ fun AppNavigation() {
             composable("main") { MainScreen() }
             composable("gameDetails") { HistoryScreen(navController) }
             composable("communityFeed") { HighlightsScreen(navController) }
+            
             composable("profile") {
                 userId?.let {
                     UserProfileScreen(
                         onViewMatchHistoryClick = { navController.navigate("match_history_screen") },
                         userProfileViewModel = userProfileViewModel,
                         userID = it,
+                        navController = navController
+
                         onSaveProfile = { /* Placeholder lambda for on-save functionality */ }
 
                     )

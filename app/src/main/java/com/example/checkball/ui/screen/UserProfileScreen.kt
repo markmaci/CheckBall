@@ -10,12 +10,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.background
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.ui.text.font.FontWeight
+import androidx.navigation.NavHostController
 import com.example.checkball.viewmodel.UserProfileViewModel
-import com.example.checkball.data.model.UserProfile
+import com.example.checkball.data.model.User
+
 import com.example.checkball.data.model.RecentStats
 import com.example.checkball.viewmodel.SaveProfileStatus
 
@@ -23,11 +24,12 @@ import com.example.checkball.viewmodel.SaveProfileStatus
 fun UserProfileScreen(
     onViewMatchHistoryClick: () -> Unit,
     userProfileViewModel: UserProfileViewModel,
-    onSaveProfile: (UserProfile) -> Unit,
-    userID: String
+    userID: String,
+    navController: NavHostController
 ) {
     val saveProfileStatus by userProfileViewModel.saveProfileStatus
-    var userProfile by remember { mutableStateOf<UserProfile?>(null) }
+    var userProfile by remember { mutableStateOf<User?>(null) }
+    var showDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         userProfileViewModel.getUserProfile { profile ->
@@ -88,14 +90,12 @@ fun UserProfileScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            onClick = onViewMatchHistoryClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 32.dp),
+            onClick = { showDialog = true },
+            modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF6F00))
         ) {
             Text(
-                text = "View Match History",
+                text = "Modify User Profile",
                 style = MaterialTheme.typography.bodyLarge.copy(color = Color.White)
             )
         }
@@ -137,26 +137,84 @@ fun UserProfileScreen(
             }
             else -> {}
         }
+    }
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = {
-                userProfile?.let { onSaveProfile(it) }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00796B))
-        ) {
-            Text(
-                text = "Save Changes",
-                style = MaterialTheme.typography.bodyLarge.copy(color = Color.White)
-            )
-        }
+    if (showDialog) {
+        ModifyProfileDialog(
+            onDismiss = { showDialog = false },
+            userProfileViewModel = userProfileViewModel,
+            userProfile = userProfile ?: User()
+        )
     }
 }
 
 @Composable
-fun PlayerInformationSection(userProfile: UserProfile) {
+fun ModifyProfileDialog(
+    onDismiss: () -> Unit,
+    userProfileViewModel: UserProfileViewModel,
+    userProfile: User
+) {
+    var displayName by remember { mutableStateOf(userProfile.displayName) }
+    var username by remember { mutableStateOf(userProfile.username) }
+    var location by remember { mutableStateOf(userProfile.location) }
+    var height by remember { mutableStateOf(userProfile.height) }
+    var weight by remember { mutableStateOf(userProfile.weight) }
+    var preferredPosition by remember { mutableStateOf(userProfile.preferredPosition) }
+    var favoriteCourt by remember { mutableStateOf(userProfile.favoriteCourt) }
+    val saveStatus by remember { mutableStateOf<SaveProfileStatus?>(null) }
+
+    val saveProfile = {
+        userProfileViewModel.saveUserProfile(
+            userProfile.copy(
+                displayName = displayName,
+                username = username,
+                location = location,
+                height = height,
+                weight = weight,
+                preferredPosition = preferredPosition,
+                favoriteCourt = favoriteCourt
+            )
+        )
+    }
+
+    LaunchedEffect(saveStatus) {
+        if (saveStatus is SaveProfileStatus.Success) onDismiss()
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Modify Profile") },
+        text = {
+            Column {
+                OutlinedTextField(value = displayName, onValueChange = { displayName = it }, label = { Text("Display Name") }, modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Username") }, modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(value = location, onValueChange = { location = it }, label = { Text("Location") }, modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(value = height, onValueChange = { height = it }, label = { Text("Height") }, modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(value = weight, onValueChange = { weight = it }, label = { Text("Weight") }, modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(value = preferredPosition, onValueChange = { preferredPosition = it }, label = { Text("Preferred Position") }, modifier = Modifier.fillMaxWidth())
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(value = favoriteCourt, onValueChange = { favoriteCourt = it }, label = { Text("Favorite Court") }, modifier = Modifier.fillMaxWidth())
+
+                when (saveStatus) {
+                    SaveProfileStatus.Loading -> { CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally)) }
+                    is SaveProfileStatus.Success -> { Text(text = "Profile saved successfully!", color = Color.Green, modifier = Modifier.align(Alignment.CenterHorizontally)) }
+                    is SaveProfileStatus.Failure -> { Text(text = "Error: ${(saveStatus as SaveProfileStatus.Failure).message}", color = Color.Red, modifier = Modifier.align(Alignment.CenterHorizontally)) }
+                    else -> {}
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = saveProfile) { Text("Save") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+@Composable
+fun PlayerInformationSection(userProfile: User) {
     Text(
         text = "Player Information",
         style = MaterialTheme.typography.bodyLarge.copy(color = Color.Black),
@@ -319,22 +377,35 @@ fun BadgesSection(badges: List<String>) {
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        badges.forEach { badge ->
-            Box(
-                modifier = Modifier
-                    .background(Color(0xFFFF6F00), shape = RoundedCornerShape(16.dp))
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                Text(
-                    text = badge,
-                    style = TextStyle(color = Color.White),
-                    textAlign = TextAlign.Center
-                )
+    if (badges.isNotEmpty()) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            badges.forEach {
+                BadgeBox(it)
             }
         }
+    } else {
+        Text(
+            text = "No badges yet",
+            style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray)
+        )
+    }
+}
+
+@Composable
+fun BadgeBox(badge: String) {
+    Box(
+        modifier = Modifier
+            .background(Color(0xFFE0E0E0), shape = RoundedCornerShape(50))
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .wrapContentSize()
+    ) {
+        Text(
+            text = badge,
+            style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black),
+            modifier = Modifier.align(Alignment.Center)
+        )
     }
 }
