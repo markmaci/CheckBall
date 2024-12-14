@@ -1,3 +1,14 @@
+import java.util.Properties
+
+val secrets = Properties().apply {
+    val secretsFile = rootProject.file("secrets.properties")
+    if (secretsFile.exists()) {
+        load(secretsFile.inputStream())
+    } else {
+        println("Warning: secrets.properties file is missing. Default values will be used.")
+    }
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -20,10 +31,19 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        buildConfigField("String", "API_KEY", "\"${secrets.getProperty("API_KEY", "default_api_key")}\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        manifestPlaceholders.putAll(
+            mapOf(
+                "APPLICATION_ID" to secrets.getProperty("APPLICATION_ID", "default_application_id"),
+                "API_KEY" to secrets.getProperty("API_KEY", "default_api_key")
+            )
+        )
     }
 
     buildTypes {
@@ -44,6 +64,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -65,6 +86,9 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("io.coil-kt:coil-compose:2.3.0")
+    implementation(libs.androidx.compose.material)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -84,16 +108,17 @@ dependencies {
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage.ktx)
     implementation(libs.firebase.analytics.ktx)
-    implementation(libs.firebase.crashlytics.ktx)
+//    implementation(libs.firebase.crashlytics.ktx)
 
     // Google Maps and Places
     implementation(libs.play.services.maps)
     implementation(libs.places)
+    implementation(libs.maps.compose)
 
     // Navigation Component
     implementation(libs.androidx.navigation.compose)
 
-    // Accompanist Permissions
+    // Accompanist Permissifons
     implementation(libs.accompanist.permissions)
 
     // Hilt
