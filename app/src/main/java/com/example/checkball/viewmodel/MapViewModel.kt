@@ -4,25 +4,24 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.pm.PackageManager
 import android.os.Looper
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.*
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.URL
-import android.util.Log
-import android.widget.Toast
-import com.example.checkball.BuildConfig
 import javax.inject.Inject
+import com.example.checkball.BuildConfig
 
 @HiltViewModel
 class MapViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
@@ -44,6 +43,7 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
         private set
 
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
+    private val firestore: FirebaseFirestore = Firebase.firestore
 
     private var debounceJob: Job? = null
 
@@ -136,25 +136,25 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
                             )
                         }
 
-                        Log.d("MapViewModel", "Court: $name, Photos: ${photos?.size ?: 0}")
-
-                        allCourts.add(
-                            Place(
-                                name = name,
-                                location = LatLng(lat, lng),
-                                address = address,
-                                phoneNumber = phoneNumber,
-                                website = website,
-                                rating = rating,
-                                userRatingsTotal = userRatingsTotal,
-                                photoReferences = photos,
-                                openingHours = openingHours
-                            )
+                        val court = Place(
+                            name = name,
+                            location = LatLng(lat, lng),
+                            address = address,
+                            phoneNumber = phoneNumber,
+                            website = website,
+                            rating = rating,
+                            userRatingsTotal = userRatingsTotal,
+                            photoReferences = photos,
+                            openingHours = openingHours
                         )
+
+                        checkAndAddParkToFirestore(court)
+
+                        allCourts.add(court)
                     }
 
                     nextPageToken = jsonResponse.optString("next_page_token", null)
-                    if (nextPageToken != null) kotlinx.coroutines.delay(2000)
+                    if (nextPageToken != null) delay(2000)
                 } catch (e: Exception) {
                     Log.e("MapViewModel", "Error fetching basketball courts: ${e.message}")
                     break
@@ -162,15 +162,40 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
             } while (nextPageToken != null)
 
             basketballCourts = allCourts
-            Log.d("MapViewModel", "Fetched ${allCourts.size} basketball courts")
             Toast.makeText(context, "Fetched ${allCourts.size} basketball courts", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun checkAndAddParkToFirestore(court: Place) {
+        val parkRef = firestore.collection("parks").document("${court.location.latitude},${court.location.longitude}")
+
+        parkRef.get().addOnSuccessListener { document ->
+            if (!document.exists()) {
+                val parkData = mapOf(
+                    "name" to court.name,
+                    "location" to mapOf(
+                        "latitude" to court.location.latitude,
+                        "longitude" to court.location.longitude
+                    ),
+                    "users" to emptyList<String>(),
+                    "address" to court.address,
+                    "rating" to court.rating,
+                    "photoReferences" to court.photoReferences
+                )
+                parkRef.set(parkData).addOnSuccessListener {
+                    Log.d("MapViewModel", "Park added to Firestore: ${court.name}")
+                }.addOnFailureListener {
+                    Log.e("MapViewModel", "Failed to add park: ${it.message}")
+                }
+            }
+        }.addOnFailureListener {
+            Log.e("MapViewModel", "Failed to check park: ${it.message}")
         }
     }
 
     fun selectCourt(court: Place) {
         selectedCourt = court
         basketballCourts = basketballCourts.sortedByDescending { it == court }
-        Log.d("MapViewModel", "Selected court: ${court.name}, moved to top of list")
     }
 
     private fun hasLocationPermission(): Boolean {

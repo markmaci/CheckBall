@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.maps.android.compose.*
@@ -25,22 +24,12 @@ import androidx.compose.ui.graphics.Color
 import coil.compose.AsyncImage
 import com.example.checkball.BuildConfig
 import androidx.compose.foundation.background
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
-import com.example.checkball.R
 import androidx.compose.ui.Alignment
 
-val lacquierRegular = FontFamily(
-    Font(R.font.lacquerregular, FontWeight.Normal)
-)
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun MainScreen(navController: NavHostController) {
-    val authViewModel: AuthViewModel = hiltViewModel()
+fun MainScreen() {
     val mapViewModel: MapViewModel = hiltViewModel()
-//    val user by authViewModel.user.collectAsState()
 
     val locationPermissionsState = rememberMultiplePermissionsState(
         permissions = listOf(
@@ -83,61 +72,46 @@ fun MainScreen(navController: NavHostController) {
 
     var selectedCourt by remember { mutableStateOf<Place?>(null) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("CheckBall") },
-                    actions = {
-                        Button(onClick = {
-                            authViewModel.logout()
-                            navController.navigate("login") {
-                                popUpTo("main") { inclusive = true }
-                            }
-                        }) {
-                            Text("Log Out")
-                        }
-                    }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF2EFDE))
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(4f)
+                .fillMaxWidth()
+        ) {
+            if (hasLocationPermissions) {
+                GoogleMapView(
+                    cameraPositionState = cameraPositionState,
+                    mapViewModel = mapViewModel
                 )
-            },
-            content = { padding ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                ) {
-                    Box(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        if (hasLocationPermissions) {
-                            GoogleMapView(
-                                cameraPositionState = cameraPositionState,
-                                mapViewModel = mapViewModel
-                            )
-                        } else {
-                            Text(
-                                text = "Location permissions are not granted.",
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.padding(16.dp)
-                            )
-                        }
-                    }
-                    CourtDetailsColumn(
-                        mapViewModel = mapViewModel,
-                        onCardClick = { court ->
-                            selectedCourt = court
-                        }
-                    )
-                }
-            }
-        )
+            } else {
+                Text(
+                    text = "Location permissions are not granted.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(16.dp),
+                    textAlign = TextAlign.Center
+                )
 
-        if (selectedCourt != null) {
-            CourtDetailsScreen(
-                court = selectedCourt,
-                onDismiss = { selectedCourt = null }
-            )
+            }
         }
+
+        CourtDetailsColumn(
+            mapViewModel = mapViewModel,
+            onCardClick = { court ->
+                selectedCourt = court
+            },
+            modifier = Modifier.weight(1f)
+        )
+    }
+
+    if (selectedCourt != null) {
+        CourtDetailsScreen(
+            court = selectedCourt,
+            onDismiss = { selectedCourt = null }
+        )
     }
 }
 
@@ -174,37 +148,44 @@ fun GoogleMapView(
 }
 
 @Composable
-fun CourtDetailsColumn(mapViewModel: MapViewModel, onCardClick: (Place) -> Unit) {
+fun CourtDetailsColumn(
+    mapViewModel: MapViewModel,
+    onCardClick: (Place) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val courts = mapViewModel.basketballCourts
     val selectedCourt = mapViewModel.selectedCourt
 
-    if (courts.isNotEmpty()) {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .background(Color(0xFFF2EFDE)),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp)
-
-        ) {
-            itemsIndexed(courts) { _, court ->
-                CourtDetailCard(
-                    court = court,
-                    isSelected = court == selectedCourt,
-                    onClick = { onCardClick(court) }
-                )
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(Color(0xFFF2EFDE))
+    ) {
+        if (courts.isNotEmpty()) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                itemsIndexed(courts) { _, court ->
+                    CourtDetailCard(
+                        court = court,
+                        isSelected = court == selectedCourt,
+                        onClick = { onCardClick(court) }
+                    )
+                }
             }
+        } else {
+            Text(
+                text = "No basketball courts found.",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyLarge
+            )
         }
-    } else {
-        Text(
-            text = "No basketball courts found.",
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodyLarge
-        )
     }
 }
 
@@ -217,7 +198,7 @@ fun CourtDetailCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(175.dp)
+            .height(100.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = if (isSelected) {
@@ -226,28 +207,25 @@ fun CourtDetailCard(
             CardDefaults.cardColors(containerColor = Color(0xFFFFA500)) // Orange for unselected
         }
     ) {
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            AsyncImage(
+                model = court.photoReferences?.firstOrNull()?.let {
+                    "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=$it&key=${BuildConfig.API_KEY}"
+                } ?: "https://via.placeholder.com/400", // Placeholder if no photo available
+                contentDescription = "Photo of ${court.name}",
+                modifier = Modifier
+                    .weight(1f)
+                    .height(80.dp) // Image height proportional to card
+            )
+            Spacer(modifier = Modifier.width(8.dp))
             Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.weight(2f)
             ) {
-                AsyncImage(
-                    model = court.photoReferences?.firstOrNull()?.let {
-                        "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=$it&key=${BuildConfig.API_KEY}"
-                    } ?: "https://via.placeholder.com/400", // Placeholder if no photo available
-                    contentDescription = "Photo of ${court.name}",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(65.dp)
-                        .aspectRatio(1.25f)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = court.name,
                     style = MaterialTheme.typography.titleMedium,

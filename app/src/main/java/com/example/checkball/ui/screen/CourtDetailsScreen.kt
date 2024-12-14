@@ -12,11 +12,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.checkball.viewmodel.Place
 import com.example.checkball.BuildConfig
 import com.example.checkball.R
+
+val lacquierRegular = FontFamily(
+    Font(R.font.lacquerregular, FontWeight.Normal)
+)
 
 @Composable
 fun CourtDetailsScreen(

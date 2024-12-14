@@ -53,9 +53,11 @@ fun AppNavigation() {
         ) {
             composable("login") { LoginScreen(navController) }
             composable("signup") { SignUpScreen(navController) }
-            composable("main") { MainScreen(navController) }
-            composable("gameDetails") { HistoryScreen() }
-            composable("communityFeed") { HighlightsScreen() }
+
+            composable("main") { MainScreen() }
+            composable("gameDetails") { HistoryScreen(navController) }
+            composable("communityFeed") { HighlightsScreen(navController) }
+            
             composable("profile") {
                 userId?.let {
                     UserProfileScreen(
@@ -63,6 +65,9 @@ fun AppNavigation() {
                         userProfileViewModel = userProfileViewModel,
                         userID = it,
                         navController = navController
+
+                        onSaveProfile = { /* Placeholder lambda for on-save functionality */ }
+
                     )
                 }
             }
