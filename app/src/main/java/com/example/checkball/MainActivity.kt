@@ -66,7 +66,7 @@ fun AppNavigation() {
                         userID = it,
                         navController = navController
 
-                        onSaveProfile = { /* Placeholder lambda for on-save functionality */ }
+//                        onSaveProfile = { /* Placeholder lambda for on-save functionality */ }
 
                     )
                 }
