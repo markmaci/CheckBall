@@ -1,32 +1,42 @@
 package com.example.checkball.ui.screen
 
 import android.Manifest
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.google.maps.android.compose.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
-import com.example.checkball.viewmodel.AuthViewModel
+import com.google.maps.android.compose.*
+import com.example.checkball.BuildConfig
+import com.example.checkball.R
 import com.example.checkball.viewmodel.MapViewModel
 import com.example.checkball.viewmodel.Place
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.Color
-import coil.compose.AsyncImage
-import com.example.checkball.BuildConfig
-import androidx.compose.foundation.background
-import androidx.compose.ui.Alignment
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.MapStyleOptions
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
     val mapViewModel: MapViewModel = hiltViewModel()
@@ -70,47 +80,87 @@ fun MainScreen() {
         }
     }
 
+    val coroutineScope = rememberCoroutineScope()
+
+    var showSheet by remember { mutableStateOf(false) }
+    var showDetails by remember { mutableStateOf(false) }
     var selectedCourt by remember { mutableStateOf<Place?>(null) }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
+            .padding(top = 16.dp)
             .background(Color(0xFFF2EFDE))
     ) {
-        Box(
-            modifier = Modifier
-                .weight(4f)
-                .fillMaxWidth()
-        ) {
-            if (hasLocationPermissions) {
-                GoogleMapView(
-                    cameraPositionState = cameraPositionState,
-                    mapViewModel = mapViewModel
-                )
-            } else {
-                Text(
-                    text = "Location permissions are not granted.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(16.dp),
-                    textAlign = TextAlign.Center
-                )
-
-            }
+        if (hasLocationPermissions) {
+            GoogleMapView(
+                cameraPositionState = cameraPositionState,
+                mapViewModel = mapViewModel,
+                onCourtSelected = { court ->
+                    selectedCourt = court
+                    showSheet = true
+                }
+            )
+        } else {
+            Text(
+                text = "Location permissions are not granted.",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                textAlign = TextAlign.Center
+            )
         }
 
-        CourtDetailsColumn(
-            mapViewModel = mapViewModel,
-            onCardClick = { court ->
-                selectedCourt = court
-            },
-            modifier = Modifier.weight(1f)
+        PullTab(
+            showSheet = showSheet,
+            onClick = { showSheet = true },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp)
         )
     }
 
-    if (selectedCourt != null) {
+    if (showSheet) {
+        val sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = true
+        )
+        ModalBottomSheet(
+            modifier = Modifier
+                .padding(top = 50.dp),
+            onDismissRequest = { showSheet = false },
+            sheetState = sheetState,
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            containerColor = Color(0xFFF2EFDE),
+            dragHandle = {
+                Icon(
+                    imageVector = if (showSheet) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                    contentDescription = "Drag Handle",
+                    tint = Color.Gray,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable { showSheet = false }
+                )
+            }
+        ) {
+            CourtBottomSheetContent(
+                mapViewModel = mapViewModel,
+                onCourtClick = { court ->
+                    selectedCourt = court
+                    coroutineScope.launch {
+                        sheetState.hide()
+                        showSheet = false
+                        showDetails = true
+                    }
+                }
+            )
+        }
+    }
+
+    if (showDetails && selectedCourt != null) {
         CourtDetailsScreen(
             court = selectedCourt,
-            onDismiss = { selectedCourt = null }
+            onDismiss = { showDetails = false; selectedCourt = null }
         )
     }
 }
@@ -118,61 +168,116 @@ fun MainScreen() {
 @Composable
 fun GoogleMapView(
     cameraPositionState: CameraPositionState,
-    mapViewModel: MapViewModel
+    mapViewModel: MapViewModel,
+    onCourtSelected: (Place) -> Unit
 ) {
-    val uiSettings = remember { MapUiSettings(zoomControlsEnabled = true) }
+    val context = LocalContext.current
+    val uiSettings = remember {
+        MapUiSettings(
+            zoomControlsEnabled = true,
+        )
+    }
+    val mapStyleOptions = remember {
+        MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style)
+    }
     val properties = remember {
         MapProperties(
             isMyLocationEnabled = true,
-            mapType = MapType.NORMAL
+            mapStyleOptions = mapStyleOptions,
         )
     }
 
     GoogleMap(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 20.dp)
+            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
         cameraPositionState = cameraPositionState,
         uiSettings = uiSettings,
-        properties = properties
+        properties = properties,
     ) {
         mapViewModel.basketballCourts.forEach { court ->
             Marker(
                 state = MarkerState(position = court.location),
                 title = court.name,
                 onClick = {
+                    onCourtSelected(court)
                     mapViewModel.selectCourt(court)
                     true
-                }
+                },
+                icon =  BitmapDescriptorFactory.fromResource(R.drawable.basketball_map_icon)
             )
         }
     }
 }
 
 @Composable
-fun CourtDetailsColumn(
+fun PullTab(showSheet: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onClick() },
+        color = Color(0xFFFFA500),
+        tonalElevation = 8.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .height(40.dp)
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = if (showSheet) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                contentDescription = if (showSheet) "Collapse" else "Expand",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Courts Available",
+                style = MaterialTheme.typography.labelLarge,
+                color = Color.White
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CourtBottomSheetContent(
     mapViewModel: MapViewModel,
-    onCardClick: (Place) -> Unit,
-    modifier: Modifier = Modifier
+    onCourtClick: (Place) -> Unit
 ) {
     val courts = mapViewModel.basketballCourts
-    val selectedCourt = mapViewModel.selectedCourt
 
-    Box(
-        modifier = modifier
+    Column(
+        modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFF2EFDE))
+            .padding(bottom = 8.dp)
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(30.dp),
+            contentAlignment = Alignment.Center
+        ) {
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         if (courts.isNotEmpty()) {
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxHeight()
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 itemsIndexed(courts) { _, court ->
                     CourtDetailCard(
                         court = court,
-                        isSelected = court == selectedCourt,
-                        onClick = { onCardClick(court) }
+                        isSelected = court == mapViewModel.selectedCourt,
+                        onClick = { onCourtClick(court) }
                     )
                 }
             }
@@ -201,11 +306,10 @@ fun CourtDetailCard(
             .height(100.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = if (isSelected) {
-            CardDefaults.cardColors(containerColor = Color(0xFF8B4513)) // Brown for selected
-        } else {
-            CardDefaults.cardColors(containerColor = Color(0xFFFFA500)) // Orange for unselected
-        }
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) Color(0xFF8B4513) else Color(0xFFFFA500)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
             modifier = Modifier
@@ -216,11 +320,12 @@ fun CourtDetailCard(
             AsyncImage(
                 model = court.photoReferences?.firstOrNull()?.let {
                     "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=$it&key=${BuildConfig.API_KEY}"
-                } ?: "https://via.placeholder.com/400", // Placeholder if no photo available
+                } ?: "https://via.placeholder.com/400",
                 contentDescription = "Photo of ${court.name}",
                 modifier = Modifier
-                    .weight(1f)
-                    .height(80.dp) // Image height proportional to card
+                    .size(130.dp)
+                    .clip(RoundedCornerShape(8.dp)),
+                contentScale = ContentScale.Crop
             )
             Spacer(modifier = Modifier.width(8.dp))
             Column(
@@ -228,12 +333,13 @@ fun CourtDetailCard(
             ) {
                 Text(
                     text = court.name,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium.copy(color = Color.White),
                     maxLines = 1
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Address: ${court.location.latitude}, ${court.location.longitude}",
-                    style = MaterialTheme.typography.bodySmall,
+                    text = "Address: ${court.address ?: "Unknown"}",
+                    style = MaterialTheme.typography.bodySmall.copy(color = Color.White),
                     maxLines = 1
                 )
             }
