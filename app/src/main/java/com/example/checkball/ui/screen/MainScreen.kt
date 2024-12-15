@@ -88,9 +88,7 @@ fun MainScreen() {
 
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(top = 16.dp)
-            .background(Color(0xFFF2EFDE))
+            .background(Color(0xFF8EFDE))
     ) {
         if (hasLocationPermissions) {
             GoogleMapView(
@@ -190,7 +188,6 @@ fun GoogleMapView(
     GoogleMap(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 20.dp)
             .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
         cameraPositionState = cameraPositionState,
         uiSettings = uiSettings,
