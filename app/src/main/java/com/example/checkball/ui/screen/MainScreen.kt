@@ -1,43 +1,40 @@
 package com.example.checkball.ui.screen
 
 import android.Manifest
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.material3.Text
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.google.maps.android.compose.*
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.CameraPosition
-import com.example.checkball.viewmodel.AuthViewModel
-import com.example.checkball.viewmodel.MapViewModel
-import com.example.checkball.viewmodel.Place
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.graphics.Color
-import coil.compose.AsyncImage
-import com.example.checkball.BuildConfig
-import androidx.compose.foundation.background
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.res.painterResource
-import kotlinx.coroutines.launch
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.maps.android.compose.*
+import com.example.checkball.BuildConfig
 import com.example.checkball.R
+import com.example.checkball.viewmodel.MapViewModel
+import com.example.checkball.viewmodel.Place
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.MapStyleOptions
-
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -86,12 +83,13 @@ fun MainScreen() {
     val coroutineScope = rememberCoroutineScope()
 
     var showSheet by remember { mutableStateOf(false) }
-
+    var showDetails by remember { mutableStateOf(false) }
     var selectedCourt by remember { mutableStateOf<Place?>(null) }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .padding(top = 16.dp)
             .background(Color(0xFFF2EFDE))
     ) {
         if (hasLocationPermissions) {
@@ -115,6 +113,7 @@ fun MainScreen() {
         }
 
         PullTab(
+            showSheet = showSheet,
             onClick = { showSheet = true },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -123,29 +122,45 @@ fun MainScreen() {
     }
 
     if (showSheet) {
+        val sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = true
+        )
         ModalBottomSheet(
+            modifier = Modifier
+                .padding(top = 50.dp),
             onDismissRequest = { showSheet = false },
-            sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true
-            ),
-            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+            sheetState = sheetState,
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
             containerColor = Color(0xFFF2EFDE),
+            dragHandle = {
+                Icon(
+                    imageVector = if (showSheet) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                    contentDescription = "Drag Handle",
+                    tint = Color.Gray,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clickable { showSheet = false }
+                )
+            }
         ) {
             CourtBottomSheetContent(
                 mapViewModel = mapViewModel,
                 onCourtClick = { court ->
                     selectedCourt = court
-                    showSheet = false
+                    coroutineScope.launch {
+                        sheetState.hide()
+                        showSheet = false
+                        showDetails = true
+                    }
                 }
             )
         }
     }
 
-    if (selectedCourt != null) {
+    if (showDetails && selectedCourt != null) {
         CourtDetailsScreen(
             court = selectedCourt,
-            onDismiss = { selectedCourt = null }
-
+            onDismiss = { showDetails = false; selectedCourt = null }
         )
     }
 }
@@ -168,18 +183,18 @@ fun GoogleMapView(
     val properties = remember {
         MapProperties(
             isMyLocationEnabled = true,
-            mapStyleOptions = mapStyleOptions
+            mapStyleOptions = mapStyleOptions,
         )
     }
 
     GoogleMap(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = 20.dp)
+            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
         cameraPositionState = cameraPositionState,
         uiSettings = uiSettings,
         properties = properties,
-        onMapLoaded = {
-
-        }
     ) {
         mapViewModel.basketballCourts.forEach { court ->
             Marker(
@@ -189,15 +204,15 @@ fun GoogleMapView(
                     onCourtSelected(court)
                     mapViewModel.selectCourt(court)
                     true
-                }
+                },
+                icon =  BitmapDescriptorFactory.fromResource(R.drawable.basketball_map_icon)
             )
         }
     }
 }
 
-
 @Composable
-fun PullTab(onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun PullTab(showSheet: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
@@ -213,8 +228,8 @@ fun PullTab(onClick: () -> Unit, modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.Center
         ) {
             Icon(
-                imageVector = Icons.Default.KeyboardArrowUp,
-                contentDescription = "Expand",
+                imageVector = if (showSheet) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                contentDescription = if (showSheet) "Collapse" else "Expand",
                 tint = Color.White,
                 modifier = Modifier.size(24.dp)
             )
@@ -239,22 +254,24 @@ fun CourtBottomSheetContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding( bottom = 8.dp)
+            .padding(bottom = 8.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(0.dp),
+                .height(30.dp),
             contentAlignment = Alignment.Center
         ) {
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         if (courts.isNotEmpty()) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxHeight()
                     .padding(horizontal = 16.dp),
-                verticalArrangement =
-                    Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 itemsIndexed(courts) { _, court ->
                     CourtDetailCard(
@@ -281,13 +298,13 @@ fun CourtBottomSheetContent(
 fun CourtDetailCard(
     court: Place,
     isSelected: Boolean,
-    onClick: (Place) -> Unit
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(100.dp)
-            .clickable {},
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) Color(0xFF8B4513) else Color(0xFFFFA500)
@@ -306,7 +323,7 @@ fun CourtDetailCard(
                 } ?: "https://via.placeholder.com/400",
                 contentDescription = "Photo of ${court.name}",
                 modifier = Modifier
-                    .size(125.dp)
+                    .size(130.dp)
                     .clip(RoundedCornerShape(8.dp)),
                 contentScale = ContentScale.Crop
             )

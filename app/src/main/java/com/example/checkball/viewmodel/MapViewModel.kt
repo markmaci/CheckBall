@@ -104,7 +104,10 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
             do {
                 val url = buildString {
                     append("$baseUrl?location=${cameraLocation.latitude},${cameraLocation.longitude}")
-                    append("&radius=$radius&type=park&keyword=basketball%20court&key=$apiKey")
+                    append("&radius=$radius")
+                    append("&type=park+or+basketball_court")
+                    append("&keyword=basketball%20court")
+                    append("&key=$apiKey")
                     if (nextPageToken != null) append("&pagetoken=$nextPageToken")
                 }
 
@@ -127,6 +130,9 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
                         val photos = result.optJSONArray("photos")?.let { photosArray ->
                             List(photosArray.length()) { photosArray.getJSONObject(it).optString("photo_reference") }
                         }
+
+                        if (photos == null) continue
+
                         val openingHours = result.optJSONObject("opening_hours")?.let { hours ->
                             OpeningHours(
                                 openNow = hours.optBoolean("open_now", false),
