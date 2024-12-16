@@ -231,6 +231,7 @@ fun MainScreen() {
             sheetState = sheetState,
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
             containerColor = Color(0xFFF2EFDE),
+            scrimColor = Color.Transparent
         ) {
             CourtBottomSheetContent(
                 mapViewModel = mapViewModel,
