@@ -4,6 +4,11 @@ import android.Manifest
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,6 +23,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -54,6 +61,38 @@ fun bitmapDescriptorFromVector(context: Context, vectorResId: Int): BitmapDescri
     vectorDrawable.draw(canvas)
     return BitmapDescriptorFactory.fromBitmap(bitmap)
 }
+
+@Composable
+fun shimmerBrush(showShimmer: Boolean = true, targetValue: Float = 1000f): Brush {
+    return if (showShimmer) {
+        val shimmerColors = listOf(
+            Color.LightGray.copy(alpha = 0.6f),
+            Color.LightGray.copy(alpha = 0.2f),
+            Color.LightGray.copy(alpha = 0.6f),
+        )
+
+        val transition = rememberInfiniteTransition()
+        val translateAnimation = transition.animateFloat(
+            initialValue = 0f,
+            targetValue = targetValue,
+            animationSpec = infiniteRepeatable(
+                animation = tween(800), repeatMode = RepeatMode.Reverse
+            )
+        )
+        Brush.linearGradient(
+            colors = shimmerColors,
+            start = Offset.Zero,
+            end = Offset(x = translateAnimation.value, y = translateAnimation.value)
+        )
+    } else {
+        Brush.linearGradient(
+            colors = listOf(Color.Transparent, Color.Transparent),
+            start = Offset.Zero,
+            end = Offset.Zero
+        )
+    }
+}
+
 
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -143,7 +182,8 @@ fun MainScreen() {
         )
         ModalBottomSheet(
             modifier = Modifier
-                .padding(top = 50.dp),
+                .padding(top = 50.dp)
+                .heightIn(min = 300.dp),
             onDismissRequest = { showSheet = false },
             sheetState = sheetState,
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
@@ -314,6 +354,8 @@ fun CourtDetailCard(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    var isImageLoading by remember { mutableStateOf(true) }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -331,16 +373,24 @@ fun CourtDetailCard(
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
-                model = court.photoReferences?.firstOrNull()?.let {
-                    "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=$it&key=${BuildConfig.API_KEY}"
-                } ?: "https://via.placeholder.com/400",
-                contentDescription = "Photo of ${court.name}",
+            Box(
                 modifier = Modifier
                     .size(130.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
-            )
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(shimmerBrush(showShimmer = isImageLoading, targetValue = 1300f)) // Apply shimmer brush
+            ) {
+                AsyncImage(
+                    model = court.photoReferences?.firstOrNull()?.let {
+                        "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=$it&key=${BuildConfig.API_KEY}"
+                    } ?: "https://via.placeholder.com/400",
+                    contentDescription = "Photo of ${court.name}",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                    onSuccess = { isImageLoading = false },
+                    onError = { isImageLoading = false }
+                )
+            }
+
             Spacer(modifier = Modifier.width(8.dp))
             Column(
                 modifier = Modifier.weight(2f)
