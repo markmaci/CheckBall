@@ -46,10 +46,16 @@ fun AppNavigation() {
             }
         }
     ) { innerPadding ->
+        val currentDestination = navController.currentBackStackEntryAsState().value?.destination?.route
+
         NavHost(
             navController = navController,
             startDestination = startDestination,
-            modifier = Modifier.padding(innerPadding)
+            modifier = if (currentDestination == "main") {
+                Modifier.padding(bottom = innerPadding.calculateBottomPadding())
+            } else {
+                Modifier.padding(innerPadding)
+            }
         ) {
             composable("login") { LoginScreen(navController) }
             composable("signup") { SignUpScreen(navController) }

@@ -1,6 +1,9 @@
 package com.example.checkball.ui.screen
 
 import android.Manifest
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -32,9 +36,24 @@ import com.example.checkball.BuildConfig
 import com.example.checkball.R
 import com.example.checkball.viewmodel.MapViewModel
 import com.example.checkball.viewmodel.Place
+import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.MapStyleOptions
 import kotlinx.coroutines.launch
+
+fun bitmapDescriptorFromVector(context: Context, vectorResId: Int): BitmapDescriptor? {
+    val vectorDrawable = ContextCompat.getDrawable(context, vectorResId) ?: return null
+
+    val width = 128
+    val height = 128
+
+    vectorDrawable.setBounds(0, 0, width, height)
+
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    vectorDrawable.draw(canvas)
+    return BitmapDescriptorFactory.fromBitmap(bitmap)
+}
 
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -87,8 +106,7 @@ fun MainScreen() {
     var selectedCourt by remember { mutableStateOf<Place?>(null) }
 
     Box(
-        modifier = Modifier
-            .background(Color(0xFF8EFDE))
+        modifier = Modifier.fillMaxSize()
     ) {
         if (hasLocationPermissions) {
             GoogleMapView(
@@ -187,8 +205,7 @@ fun GoogleMapView(
 
     GoogleMap(
         modifier = Modifier
-            .fillMaxSize()
-            .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+            .fillMaxSize(),
         cameraPositionState = cameraPositionState,
         uiSettings = uiSettings,
         properties = properties,
@@ -202,7 +219,7 @@ fun GoogleMapView(
                     mapViewModel.selectCourt(court)
                     true
                 },
-                icon =  BitmapDescriptorFactory.fromResource(R.drawable.basketball_map_icon)
+                icon = bitmapDescriptorFromVector(context, R.drawable.basketball_map_icon)
             )
         }
     }
