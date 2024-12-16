@@ -43,7 +43,7 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
         displayMetrics.widthPixels
     }
 
-    var cameraLocation by mutableStateOf(LatLng(40.7128, -74.0060)) // Default to NYC
+    var cameraLocation by mutableStateOf(LatLng(42.350472, -71.106491)) // Default to Marsh Plaza
         private set
 
     var zoomLevel by mutableFloatStateOf(15f)

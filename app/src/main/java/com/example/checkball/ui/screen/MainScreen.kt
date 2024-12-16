@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.util.Log
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -40,6 +41,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.maps.android.compose.*
 import com.example.checkball.BuildConfig
 import com.example.checkball.R
+import com.example.checkball.ui.component.CourtDetailsBottomSheet
 import com.example.checkball.viewmodel.MapViewModel
 import com.example.checkball.viewmodel.Place
 import com.example.checkball.viewmodel.distanceInMeters
@@ -142,15 +144,24 @@ fun MainScreen() {
     var lastFetchedCenter by remember { mutableStateOf<LatLng?>(null) }
     var lastFetchedRadius by remember { mutableStateOf<Int?>(null) }
 
+    var showSheet by remember { mutableStateOf(false) }
+    var showDetails by remember { mutableStateOf(false) }
+    var selectedCourt by remember { mutableStateOf<Place?>(null) }
+
     LaunchedEffect(cameraPositionState.position) {
         delay(300)
+
+        if (showDetails) {
+            return@LaunchedEffect
+        }
 
         if (!cameraPositionState.isMoving) {
             val projection = cameraPositionState.projection
             if (projection != null) {
                 val visibleRegion = projection.visibleRegion
                 val mapCenter = cameraPositionState.position.target
-                val radius = distanceInMeters(mapCenter, visibleRegion.farRight)
+                val rawRadius = distanceInMeters(mapCenter, visibleRegion.farRight)
+                val radius = rawRadius.coerceAtLeast(300)
 
                 val radiusThreshold = 100
                 val positionThreshold = 100
@@ -174,9 +185,7 @@ fun MainScreen() {
 
     val coroutineScope = rememberCoroutineScope()
 
-    var showSheet by remember { mutableStateOf(false) }
-    var showDetails by remember { mutableStateOf(false) }
-    var selectedCourt by remember { mutableStateOf<Place?>(null) }
+
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -222,16 +231,6 @@ fun MainScreen() {
             sheetState = sheetState,
             shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
             containerColor = Color(0xFFF2EFDE),
-            dragHandle = {
-                Icon(
-                    imageVector = if (showSheet) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
-                    contentDescription = "Drag Handle",
-                    tint = Color.Gray,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clickable { showSheet = false }
-                )
-            }
         ) {
             CourtBottomSheetContent(
                 mapViewModel = mapViewModel,
@@ -247,12 +246,31 @@ fun MainScreen() {
         }
     }
 
+    LaunchedEffect(showDetails, selectedCourt) {
+        if (showDetails && selectedCourt != null) {
+            delay(300)
+
+            val offsetLatitude = selectedCourt!!.location.latitude - 0.0005
+            cameraPositionState.animate(
+                update = CameraUpdateFactory.newLatLngZoom(
+                    LatLng(offsetLatitude, selectedCourt!!.location.longitude),
+                    19f
+                ),
+                durationMs = 1000
+            )
+        }
+    }
+
     if (showDetails && selectedCourt != null) {
-        CourtDetailsScreen(
-            court = selectedCourt,
-            onDismiss = { showDetails = false; selectedCourt = null }
+        CourtDetailsBottomSheet(
+            court = selectedCourt!!,
+            onDismiss = {
+                showDetails = false
+                selectedCourt = null
+            }
         )
     }
+
 }
 
 @Composable
@@ -283,6 +301,7 @@ fun GoogleMapView(
         cameraPositionState = cameraPositionState,
         uiSettings = uiSettings,
         properties = properties,
+        contentPadding = PaddingValues(top = 40.dp)
     ) {
         mapViewModel.basketballCourts.forEach { court ->
             Marker(
@@ -412,7 +431,7 @@ fun CourtDetailCard(
                 modifier = Modifier
                     .size(130.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(shimmerBrush(showShimmer = isImageLoading, targetValue = 1300f)) // Apply shimmer brush
+                    .background(shimmerBrush(showShimmer = isImageLoading, targetValue = 1300f))
             ) {
                 AsyncImage(
                     model = court.photoReferences?.firstOrNull()?.let {
