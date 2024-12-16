@@ -325,7 +325,8 @@ fun CourtBottomSheetContent(
                 modifier = Modifier
                     .fillMaxHeight()
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(bottom = 60.dp)
             ) {
                 itemsIndexed(courts) { _, court ->
                     CourtDetailCard(
