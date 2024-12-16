@@ -22,6 +22,11 @@ import org.json.JSONObject
 import java.net.URL
 import javax.inject.Inject
 import com.example.checkball.BuildConfig
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 @HiltViewModel
 class MapViewModel @Inject constructor(application: Application) : AndroidViewModel(application) {
@@ -32,6 +37,11 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
     }
 
     private val context = application.applicationContext
+
+    private val screenWidth: Int by lazy {
+        val displayMetrics = context.resources.displayMetrics
+        displayMetrics.widthPixels
+    }
 
     var cameraLocation by mutableStateOf(LatLng(40.7128, -74.0060)) // Default to NYC
         private set
@@ -94,14 +104,6 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
                 PackageManager.PERMISSION_GRANTED
     }
 
-    private fun calculateRadius(zoom: Float): Int {
-        return when {
-            zoom >= 16 -> 1000
-            zoom >= 14 -> 2000
-            zoom >= 12 -> 5000
-            else -> 10000
-        }
-    }
 
     @SuppressLint("MissingPermission")
     fun fetchUserLocation() {
@@ -129,9 +131,6 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
         )
     }
 
-    fun startFetchingCourts() {
-        fetchBasketballCourts()
-    }
 
     fun onCameraMoved(newCameraLocation: LatLng, newZoomLevel: Float) {
         viewModelScope.launch {
@@ -143,7 +142,6 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
                 cameraLocation = newCameraLocation
                 zoomLevel = newZoomLevel
 
-                fetchBasketballCourts()
             }
         }
     }
@@ -153,8 +151,7 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
         return status.equals("OVER_QUERY_LIMIT", ignoreCase = true)
     }
 
-    private fun fetchBasketballCourts() {
-        val radius = calculateRadius(zoomLevel)
+    fun fetchBasketballCourts(radius: Int) {
         val apiKey = BuildConfig.API_KEY
         val baseUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json"
 
@@ -307,3 +304,14 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
         val openNow: Boolean,
         val weekdayText: List<String>? = null
     )
+
+fun distanceInMeters(from: LatLng, to: LatLng): Int {
+    val r = 6371000
+    val dLat = Math.toRadians(to.latitude - from.latitude)
+    val dLng = Math.toRadians(to.longitude - from.longitude)
+    val a = sin(dLat / 2) * sin(dLat / 2) +
+            cos(Math.toRadians(from.latitude)) * cos(Math.toRadians(to.latitude)) *
+            sin(dLng / 2) * sin(dLng / 2)
+    val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    return (r * c).toInt()
+}

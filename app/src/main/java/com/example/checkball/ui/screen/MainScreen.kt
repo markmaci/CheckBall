@@ -30,7 +30,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
@@ -43,9 +42,12 @@ import com.example.checkball.BuildConfig
 import com.example.checkball.R
 import com.example.checkball.viewmodel.MapViewModel
 import com.example.checkball.viewmodel.Place
+import com.example.checkball.viewmodel.distanceInMeters
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 fun bitmapDescriptorFromVector(context: Context, vectorResId: Int): BitmapDescriptor? {
@@ -71,13 +73,13 @@ fun shimmerBrush(showShimmer: Boolean = true, targetValue: Float = 1000f): Brush
             Color.LightGray.copy(alpha = 0.6f),
         )
 
-        val transition = rememberInfiniteTransition()
+        val transition = rememberInfiniteTransition(label = "")
         val translateAnimation = transition.animateFloat(
             initialValue = 0f,
             targetValue = targetValue,
             animationSpec = infiniteRepeatable(
                 animation = tween(800), repeatMode = RepeatMode.Reverse
-            )
+            ), label = ""
         )
         Brush.linearGradient(
             colors = shimmerColors,
@@ -128,7 +130,6 @@ fun MainScreen() {
                 update = CameraUpdateFactory.newLatLngZoom(mapViewModel.cameraLocation, mapViewModel.zoomLevel),
                 durationMs = 1000
             )
-            mapViewModel.startFetchingCourts()
         }
     }
 
@@ -137,6 +138,39 @@ fun MainScreen() {
             mapViewModel.onCameraMoved(cameraPositionState.position.target, cameraPositionState.position.zoom)
         }
     }
+
+    var lastFetchedCenter by remember { mutableStateOf<LatLng?>(null) }
+    var lastFetchedRadius by remember { mutableStateOf<Int?>(null) }
+
+    LaunchedEffect(cameraPositionState.position) {
+        delay(300)
+
+        if (!cameraPositionState.isMoving) {
+            val projection = cameraPositionState.projection
+            if (projection != null) {
+                val visibleRegion = projection.visibleRegion
+                val mapCenter = cameraPositionState.position.target
+                val radius = distanceInMeters(mapCenter, visibleRegion.farRight)
+
+                val radiusThreshold = 100
+                val positionThreshold = 100
+
+                val shouldFetch = when {
+                    lastFetchedCenter == null || lastFetchedRadius == null -> true
+                    distanceInMeters(lastFetchedCenter!!, mapCenter) > positionThreshold -> true
+                    kotlin.math.abs(lastFetchedRadius!! - radius) > radiusThreshold -> true
+                    else -> false
+                }
+
+                if (shouldFetch) {
+                    mapViewModel.fetchBasketballCourts(radius)
+                    lastFetchedCenter = mapCenter
+                    lastFetchedRadius = radius
+                }
+            }
+        }
+    }
+
 
     val coroutineScope = rememberCoroutineScope()
 
