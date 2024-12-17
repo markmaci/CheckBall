@@ -1,6 +1,7 @@
 package com.example.checkball.data.model
 
 data class Match(
+    val userId: String = "",
     val date: String = "",
     val opponent: String = "",
     val result: String = "",

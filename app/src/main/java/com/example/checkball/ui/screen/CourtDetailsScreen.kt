@@ -1,5 +1,6 @@
 package com.example.checkball.ui.screen
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -24,7 +25,7 @@ import com.example.checkball.R
 val lacquierRegular = FontFamily(
     Font(R.font.lacquerregular, FontWeight.Normal)
 )
-
+@SuppressLint("DefaultLocale")
 @Composable
 fun CourtDetailsScreen(
     court: Place?,
