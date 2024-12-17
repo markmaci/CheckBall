@@ -3,15 +3,25 @@ package com.example.checkball.ui.screen
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.checkball.R
 import com.example.checkball.viewmodel.AuthViewModel
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -29,10 +39,9 @@ fun LoginScreen(navController: NavController) {
 
     val context = LocalContext.current
 
-    // Configure Google Sign-In
     val gso = remember {
         GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken("642706962641-6rvd0slpvv4lu3fourdqpko9csrpl2kc.apps.googleusercontent.com") // Replace with your Web Client ID
+            .requestIdToken("642706962641-6rvd0slpvv4lu3fourdqpko9csrpl2kc.apps.googleusercontent.com")
             .requestEmail()
             .build()
     }
@@ -41,7 +50,6 @@ fun LoginScreen(navController: NavController) {
         GoogleSignIn.getClient(context, gso)
     }
 
-    // Launcher for Google Sign-In
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -58,7 +66,6 @@ fun LoginScreen(navController: NavController) {
         }
     }
 
-    // Navigate to the main screen when the user logs in successfully
     LaunchedEffect(user) {
         if (user != null) {
             navController.navigate("main") {
@@ -67,7 +74,6 @@ fun LoginScreen(navController: NavController) {
         }
     }
 
-    // Display error messages if any
     val snackbarHostState = remember { SnackbarHostState() }
     errorMessage?.let { message ->
         LaunchedEffect(message) {
@@ -77,9 +83,7 @@ fun LoginScreen(navController: NavController) {
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(title = { Text("Login To CheckBall") })
-        },
+        containerColor = Color(0xFFF2EFDE),
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         },
@@ -87,49 +91,144 @@ fun LoginScreen(navController: NavController) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(Color(0xFFF2EFDE))
                     .padding(padding)
                     .padding(16.dp),
-                verticalArrangement = Arrangement.Center
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                OutlinedTextField(
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Welcome Back to CheckBall!",
+                    style = MaterialTheme.typography.displayLarge.copy(
+                        fontFamily = lacquierRegular,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    ),
+                    modifier = Modifier.padding(bottom = 16.dp),
+                    maxLines = 2
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.basketball_player_orange),
+                        contentDescription = "Basketball Player 1",
+                        modifier = Modifier
+                            .size(200.dp)
+                            .padding(end = 16.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                    Image(
+                        painter = painterResource(id = R.drawable.basketball_player_blue),
+                        contentDescription = "Basketball Player 2",
+                        modifier = Modifier
+                            .size(200.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+
+                TextField(
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("Email") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White, RoundedCornerShape(8.dp)),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        containerColor = Color.White
+                    )
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+                Spacer(modifier = Modifier.height(16.dp))
+
+                TextField(
                     value = password,
                     onValueChange = { password = it },
                     label = { Text("Password") },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.White, RoundedCornerShape(8.dp)),
+                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                        containerColor = Color.White
+                    )
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+
                 Button(
                     onClick = {
                         authViewModel.login(email.trim(), password.trim())
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFA500)),
+                    shape = RoundedCornerShape(12.dp),
                     enabled = email.isNotBlank() && password.isNotBlank()
                 ) {
-                    Text("Login")
+                    Text(
+                        text = "Login",
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
+
                 Button(
                     onClick = {
                         val signInIntent = googleSignInClient.signInIntent
                         googleSignInLauncher.launch(signInIntent)
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, Color(0xFFFFA500))
                 ) {
-                    Text("Sign in with Google")
+                    Image(
+                        painter = painterResource(id = R.drawable.google_icon),
+                        contentDescription = "Google Icon",
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Sign in with Google",
+                        color = Color.Black,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                 }
-                TextButton(onClick = { navController.navigate("signup") }) {
-                    Text("Don't have an account? Sign up")
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Don't have an account?",
+                        color = Color.Black,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    TextButton(onClick = { navController.navigate("signup") }) {
+                        Text(
+                            text = "Sign up",
+                            color = Color(0xFFFFA500),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     )

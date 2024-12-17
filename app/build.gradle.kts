@@ -86,9 +86,11 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation("androidx.core:core-splashscreen:1.0.1")
-    implementation("io.coil-kt:coil-compose:2.3.0")
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.coil.compose)
     implementation(libs.androidx.compose.material)
+    implementation(libs.androidx.material.icons.core.android)
+    implementation(libs.androidx.material.icons.core.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -104,6 +106,8 @@ dependencies {
     implementation(libs.firebase.analytics)
 
     // Firebase dependencies
+    implementation("com.google.firebase:firebase-storage:20.3.0")
+    implementation("com.google.firebase:firebase-database:20.3.1")
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage.ktx)

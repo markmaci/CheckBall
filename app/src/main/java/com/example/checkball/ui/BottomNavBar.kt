@@ -24,8 +24,8 @@ val lacquierRegular = FontFamily(
 
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
     object Home : BottomNavItem("main", Icons.Default.Home, "Home")
-    object History : BottomNavItem("gameDetails", Icons.Default.Info, "History")
-    object CommunityFeed : BottomNavItem("communityFeed", Icons.Default.List, "Highlights")
+    object History : BottomNavItem("gameDetails", Icons.Default.List, "Runs")
+    object CommunityFeed : BottomNavItem("communityFeed", Icons.Default.Favorite, "Chat")
     object Profile : BottomNavItem("profile", Icons.Default.Person, "Profile")
 }
 
