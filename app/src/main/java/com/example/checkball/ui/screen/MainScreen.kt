@@ -267,14 +267,11 @@ fun MainScreen() {
         val parkRef = firestore.collection("parks")
             .document("${court.location.latitude},${court.location.longitude}")
 
-        val userDoc = firestore.collection("users").document(currentUserUid).get().await()
-        val currentUserUsername = userDoc.getString("displayName") ?: "Unknown Player"
-
-        parkRef.update("users", FieldValue.arrayUnion(currentUserUsername))
+        parkRef.update("users", FieldValue.arrayUnion(currentUserUid))
             .addOnSuccessListener {
-                Log.d("MainScreen", "Added $currentUserUsername to ${court.name}")
-                parkRef.get().addOnSuccessListener { doc ->
-                    val updatedUsers = doc.get("users") as? List<String> ?: emptyList()
+                Log.d("MainScreen", "Added UID $currentUserUid to ${court.name}")
+                coroutineScope.launch {
+                    val updatedUsers = parkRef.get().await().get("users") as? List<String> ?: emptyList()
                     usersAtPark = updatedUsers
                 }
             }
@@ -282,6 +279,26 @@ fun MainScreen() {
                 Log.e("MainScreen", "Failed to add user: ${it.message}")
             }
     }
+
+    suspend fun updateImOut(court: Place) {
+        val firestore = Firebase.firestore
+        val parkRef = firestore.collection("parks")
+            .document("${court.location.latitude},${court.location.longitude}")
+
+        parkRef.update("users", FieldValue.arrayRemove(currentUserUid))
+            .addOnSuccessListener {
+                Log.d("MainScreen", "Removed UID $currentUserUid from ${court.name}")
+                coroutineScope.launch {
+                    val updatedUsers = parkRef.get().await().get("users") as? List<String> ?: emptyList()
+                    usersAtPark = updatedUsers
+                }
+            }
+            .addOnFailureListener {
+                Log.e("MainScreen", "Failed to remove user: ${it.message}")
+            }
+    }
+
+
 
     LaunchedEffect(showDetails, selectedCourt) {
         if (showDetails && selectedCourt != null) {
@@ -309,9 +326,16 @@ fun MainScreen() {
             onIGotNextClick = {
                 updateIgotNext(selectedCourt!!)
             },
-            usersAtPark = usersAtPark
+            onImOutClick = {
+                updateImOut(selectedCourt!!)
+            },
+            usersAtPark = usersAtPark,
+            currentUserUsername = FirebaseAuth.getInstance().currentUser?.displayName ?: "Unknown Player",
+            mapViewModel = mapViewModel
         )
+
     }
+
 
 }
 
