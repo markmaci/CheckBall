@@ -1,4 +1,6 @@
 // SignUpScreen.kt
+@file:Suppress("DEPRECATION")
+
 package com.example.checkball.ui.screen
 
 import android.app.Activity

@@ -2,12 +2,16 @@ package com.example.checkball.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.example.checkball.data.model.Match
+import com.example.checkball.data.model.RecentStats
+import com.example.checkball.data.model.User
+import com.example.checkball.data.repository.MatchRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 class MatchHistoryViewModel : ViewModel() {
     private val firestore = FirebaseFirestore.getInstance()
+    private val matchRepository = MatchRepository()
 
     private val _matchHistory = MutableStateFlow<List<Match>>(emptyList())
     val matchHistory: StateFlow<List<Match>> = _matchHistory
@@ -28,5 +32,27 @@ class MatchHistoryViewModel : ViewModel() {
             .addOnFailureListener {
                 _isLoading.value = false
             }
+    }
+
+    fun addMatch(newMatch: Match, user: User) {
+        val updatedMatches = _matchHistory.value.toMutableList().apply {
+            add(0, newMatch)
+            if (size > 10) removeAt(size - 1)
+        }
+
+        _matchHistory.value = updatedMatches
+        saveMatchToFirestore(newMatch, user)
+
+        val updatedStats = RecentStats(
+            pointsScored = newMatch.pointsScored,
+            assists = newMatch.assists,
+            rebounds = newMatch.rebounds
+        )
+        matchRepository.logGameStats(updatedStats, {}, {})
+    }
+
+    private fun saveMatchToFirestore(newMatch: Match, user: User) {
+        firestore.collection("matches")
+            .add(newMatch.copy(userId = user.uid))
     }
 }

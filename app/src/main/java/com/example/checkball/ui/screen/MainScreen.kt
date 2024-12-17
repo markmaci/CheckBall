@@ -40,7 +40,6 @@ val lacquierRegular = FontFamily(
 fun MainScreen(navController: NavHostController) {
     val authViewModel: AuthViewModel = hiltViewModel()
     val mapViewModel: MapViewModel = hiltViewModel()
-//    val user by authViewModel.user.collectAsState()
 
     val locationPermissionsState = rememberMultiplePermissionsState(
         permissions = listOf(
@@ -221,9 +220,9 @@ fun CourtDetailCard(
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = if (isSelected) {
-            CardDefaults.cardColors(containerColor = Color(0xFF8B4513)) // Brown for selected
+            CardDefaults.cardColors(containerColor = Color(0xFF8B4513))
         } else {
-            CardDefaults.cardColors(containerColor = Color(0xFFFFA500)) // Orange for unselected
+            CardDefaults.cardColors(containerColor = Color(0xFFFFA500))
         }
     ) {
         Box(
@@ -240,7 +239,7 @@ fun CourtDetailCard(
                 AsyncImage(
                     model = court.photoReferences?.firstOrNull()?.let {
                         "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=$it&key=${BuildConfig.API_KEY}"
-                    } ?: "https://via.placeholder.com/400", // Placeholder if no photo available
+                    } ?: "https://via.placeholder.com/400",
                     contentDescription = "Photo of ${court.name}",
                     modifier = Modifier
                         .fillMaxWidth()

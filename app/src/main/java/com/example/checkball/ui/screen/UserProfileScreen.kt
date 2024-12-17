@@ -16,24 +16,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavHostController
 import com.example.checkball.viewmodel.UserProfileViewModel
 import com.example.checkball.data.model.User
+
 import com.example.checkball.data.model.RecentStats
 import com.example.checkball.viewmodel.SaveProfileStatus
 
 @Composable
 fun UserProfileScreen(
-    onViewMatchHistoryClick: () -> Unit,
     userProfileViewModel: UserProfileViewModel,
     userID: String,
     navController: NavHostController
 ) {
     val saveProfileStatus by userProfileViewModel.saveProfileStatus
-    var userProfile by remember { mutableStateOf<User?>(null) }
+    val currentUser by userProfileViewModel.currentUser
     var showDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        userProfileViewModel.getUserProfile { profile ->
-            userProfile = profile
-        }
+        userProfileViewModel.getUserProfile()
     }
 
     Column(
@@ -43,7 +41,7 @@ fun UserProfileScreen(
             .background(Color.White)
     ) {
         Text(
-            text = userProfile?.displayName?.ifEmpty { "No Name" } ?: "Loading...",
+            text = currentUser?.displayName?.ifEmpty { "No Name" } ?: "Loading...",
             style = MaterialTheme.typography.titleLarge.copy(color = Color.Black),
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center
@@ -72,7 +70,7 @@ fun UserProfileScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = "@${userProfile?.username?.ifEmpty { "No Username" } ?: "Loading..."}",
+                text = "@${currentUser?.username?.ifEmpty { "No Username" } ?: "Loading..."}",
                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black),
                 textAlign = TextAlign.Center
             )
@@ -80,7 +78,7 @@ fun UserProfileScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = userProfile?.location?.ifEmpty { "No Location" } ?: "Loading...",
+                text = currentUser?.location?.ifEmpty { "No Location" } ?: "Loading...",
                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black),
                 textAlign = TextAlign.Center
             )
@@ -101,15 +99,15 @@ fun UserProfileScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        userProfile?.let { PlayerInformationSection(userProfile = it) }
+        currentUser?.let { PlayerInformationSection(userProfile = it) }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        RecentStatsSection(recentStats = userProfile?.recentStats ?: RecentStats())
+        RecentStatsSection(recentStats = currentUser?.recentStats ?: RecentStats())
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        BadgesSection(badges = userProfile?.badges ?: emptyList())
+        BadgesSection(badges = currentUser?.badges ?: emptyList())
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -142,7 +140,7 @@ fun UserProfileScreen(
         ModifyProfileDialog(
             onDismiss = { showDialog = false },
             userProfileViewModel = userProfileViewModel,
-            userProfile = userProfile ?: User()
+            userProfile = currentUser ?: User()
         )
     }
 }

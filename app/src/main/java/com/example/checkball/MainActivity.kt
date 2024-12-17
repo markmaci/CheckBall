@@ -14,11 +14,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import com.example.checkball.ui.screen.LoginScreen
 import com.example.checkball.ui.screen.SignUpScreen
 import com.example.checkball.ui.screen.MainScreen
-import com.example.checkball.ui.screen.HistoryScreen
 import com.example.checkball.ui.screen.HighlightsScreen
 import com.example.checkball.ui.screen.UserProfileScreen
 import com.example.checkball.viewmodel.UserProfileViewModel
 import com.example.checkball.ui.BottomNavigationBar
+import com.example.checkball.ui.screen.MatchHistoryScreen
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -54,12 +54,11 @@ fun AppNavigation() {
             composable("login") { LoginScreen(navController) }
             composable("signup") { SignUpScreen(navController) }
             composable("main") { MainScreen(navController) }
-            composable("gameDetails") { HistoryScreen() }
+            composable("gameDetails") { MatchHistoryScreen(navController) }
             composable("communityFeed") { HighlightsScreen() }
             composable("profile") {
                 userId?.let {
                     UserProfileScreen(
-                        onViewMatchHistoryClick = { navController.navigate("match_history_screen") },
                         userProfileViewModel = userProfileViewModel,
                         userID = it,
                         navController = navController

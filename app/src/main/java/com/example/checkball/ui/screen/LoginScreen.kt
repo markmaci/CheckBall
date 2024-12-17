@@ -1,4 +1,6 @@
 // LoginScreen.kt
+@file:Suppress("DEPRECATION")
+
 package com.example.checkball.ui.screen
 
 import androidx.activity.compose.rememberLauncherForActivityResult
