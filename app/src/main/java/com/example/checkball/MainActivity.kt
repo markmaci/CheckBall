@@ -35,7 +35,7 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val auth = FirebaseAuth.getInstance()
     val isLoggedIn = auth.currentUser != null
-    val startDestination = if (isLoggedIn) "main" else "login"
+    val startDestination = if (isLoggedIn) "profile" else "login"
     val userId = auth.currentUser?.uid
     val userProfileViewModel: UserProfileViewModel = viewModel()
 
@@ -61,10 +61,7 @@ fun AppNavigation() {
             composable("signup") { SignUpScreen(navController) }
             composable("main") { MainScreen() }
             composable("gameDetails") { MatchHistoryScreen(navController) }
-            composable("communityFeed") { HighlightsScreen(navController) }
-
-            composable("main") { MainScreen() }
-            composable("communityFeed") { HighlightsScreen(navController) }
+            composable("communityFeed") { HighlightsScreen() }
 
             composable("profile") {
                 userId?.let {

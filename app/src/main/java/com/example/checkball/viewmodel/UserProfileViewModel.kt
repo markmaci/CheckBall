@@ -13,9 +13,6 @@ class UserProfileViewModel(
     private val userProfileRepository: UserProfileRepository = UserProfileRepository(FirestoreService())
 ) : ViewModel() {
 
-    private val _currentUser = mutableStateOf<User?>(null)
-    val currentUser: State<User?> = _currentUser
-
     private val _saveProfileStatus = mutableStateOf<SaveProfileStatus>(SaveProfileStatus.Idle)
     val saveProfileStatus: State<SaveProfileStatus> = _saveProfileStatus
 
@@ -31,13 +28,13 @@ class UserProfileViewModel(
         }
     }
 
-    fun getUserProfile() {
+    fun getUserProfile(callback: (User?) -> Unit) {
         viewModelScope.launch {
             try {
                 val profile = userProfileRepository.getUserProfile()
-                _currentUser.value = profile
+                callback(profile)
             } catch (e: Exception) {
-                _currentUser.value = null
+                callback(null)
             }
         }
     }

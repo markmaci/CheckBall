@@ -76,10 +76,9 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
                         "latitude" to court.location.latitude,
                         "longitude" to court.location.longitude
                     ),
-                    "users" to emptyList<String>(),
+                    "photos" to emptyList<Map<String, String>>(),
                     "address" to court.address,
-                    "rating" to court.rating,
-                    "photoReferences" to court.photoReferences
+                    "rating" to court.rating
                 )
                 parkRef.set(parkData).addOnSuccessListener {
                     Log.d("MapViewModel", "Park added to Firestore: ${court.name}")

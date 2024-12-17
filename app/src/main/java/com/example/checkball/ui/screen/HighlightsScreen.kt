@@ -135,7 +135,7 @@ fun HighlightsScreen() {
 // Helper function to get court photos
 private suspend fun fetchCourtsWithPhotos(
     mapViewModel: MapViewModel,
-    radius: Int = 5000,
+    radius: Int = 2500,
     onCourtsFetched: (List<Place>) -> Unit
 ) {
     mapViewModel.fetchUserLocation()

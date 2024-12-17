@@ -28,11 +28,13 @@ fun UserProfileScreen(
     navController: NavHostController
 ) {
     val saveProfileStatus by userProfileViewModel.saveProfileStatus
-    val currentUser by userProfileViewModel.currentUser
+    var userProfile by remember { mutableStateOf<User?>(null) }
     var showDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        userProfileViewModel.getUserProfile()
+        userProfileViewModel.getUserProfile { profile ->
+            userProfile = profile
+        }
     }
 
     Column(
@@ -42,7 +44,7 @@ fun UserProfileScreen(
             .background(Color.White)
     ) {
         Text(
-            text = currentUser?.displayName?.ifEmpty { "No Name" } ?: "Loading...",
+            text = userProfile?.displayName?.ifEmpty { "No Name" } ?: "Loading...",
             style = MaterialTheme.typography.titleLarge.copy(color = Color.Black),
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center
@@ -71,7 +73,7 @@ fun UserProfileScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = "@${currentUser?.username?.ifEmpty { "No Username" } ?: "Loading..."}",
+                text = "@${userProfile?.username?.ifEmpty { "No Username" } ?: "Loading..."}",
                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black),
                 textAlign = TextAlign.Center
             )
@@ -79,7 +81,7 @@ fun UserProfileScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = currentUser?.location?.ifEmpty { "No Location" } ?: "Loading...",
+                text = userProfile?.location?.ifEmpty { "No Location" } ?: "Loading...",
                 style = MaterialTheme.typography.bodyMedium.copy(color = Color.Black),
                 textAlign = TextAlign.Center
             )
@@ -100,15 +102,15 @@ fun UserProfileScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        currentUser?.let { PlayerInformationSection(userProfile = it) }
+        userProfile?.let { PlayerInformationSection(userProfile = it) }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        RecentStatsSection(recentStats = currentUser?.recentStats ?: RecentStats())
+        RecentStatsSection(recentStats = userProfile?.recentStats ?: RecentStats())
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        BadgesSection(badges = currentUser?.badges ?: emptyList())
+        BadgesSection(badges = userProfile?.badges ?: emptyList())
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -141,7 +143,7 @@ fun UserProfileScreen(
         ModifyProfileDialog(
             onDismiss = { showDialog = false },
             userProfileViewModel = userProfileViewModel,
-            userProfile = currentUser ?: User()
+            userProfile = userProfile ?: User()
         )
     }
 }
