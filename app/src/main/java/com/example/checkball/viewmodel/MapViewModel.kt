@@ -175,7 +175,6 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
 
                 try {
                     val response = withContext(Dispatchers.IO) { URL(url).readText() }
-                    Log.d("MapViewModel", "API Response: $response")
 
                     val jsonResponse = JSONObject(response)
                     val status = jsonResponse.optString("status")
@@ -212,6 +211,7 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
                         val result = results.getJSONObject(i)
                         val name = result.optString("name", "Unknown Court")
                         val location = result.getJSONObject("geometry").getJSONObject("location")
+                        val placeId = result.optString("place_id")
                         val lat = location.getDouble("lat")
                         val lng = location.getDouble("lng")
                         val address = result.optString("vicinity")
@@ -244,6 +244,7 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
                         val court = Place(
                             name = name,
                             location = LatLng(lat, lng),
+                            placeId = placeId,
                             address = address,
                             phoneNumber = phoneNumber,
                             website = website,
@@ -286,11 +287,39 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
 
 
     }
+
+    suspend fun fetchPlaceDetailsPhotos(placeId: String): List<String> {
+        val apiKey = BuildConfig.API_KEY
+        val detailsUrl = "https://maps.googleapis.com/maps/api/place/details/json?" +
+                "place_id=$placeId&fields=photos&key=$apiKey"
+
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = URL(detailsUrl).readText()
+                val jsonResponse = JSONObject(response)
+                val result = jsonResponse.optJSONObject("result") ?: JSONObject()
+                val photosArray = result.optJSONArray("photos") ?: JSONArray()
+
+                val photoReferences = mutableListOf<String>()
+                for (i in 0 until photosArray.length()) {
+                    val photoRef = photosArray.getJSONObject(i).optString("photo_reference")
+                    if (photoRef.isNotEmpty()) {
+                        photoReferences.add(photoRef)
+                    }
+                }
+                photoReferences
+            } catch (e: Exception) {
+                Log.e("MapViewModel", "Error fetching place details: ${e.message}")
+                emptyList<String>()
+            }
+        }
+    }
 }
 
     data class Place(
         val name: String,
         val location: LatLng,
+        val placeId: String? = null,
         val address: String? = null,
         val phoneNumber: String? = null,
         val website: String? = null,

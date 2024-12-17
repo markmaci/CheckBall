@@ -1,7 +1,12 @@
 package com.example.checkball.ui.component
 
+import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -9,9 +14,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.example.checkball.BuildConfig
+import com.example.checkball.R
+import com.example.checkball.ui.screen.shimmerBrush
 import com.example.checkball.viewmodel.Place
 import kotlinx.coroutines.launch
 
@@ -29,6 +41,20 @@ fun CourtDetailsBottomSheet(
 
     val isOpen = court.openingHours?.openNow == true
 
+    val photoUrls = remember(court) {
+        court.photoReferences?.take(10)?.map { photoRef ->
+            "https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=$photoRef&key=${BuildConfig.API_KEY}"
+        } ?: emptyList()
+    }
+
+    LaunchedEffect(photoUrls) {
+        Log.d("CourtDetailsBottomSheet", "photoUrls size: ${photoUrls.size}")
+        photoUrls.forEachIndexed { i, url ->
+            Log.d("CourtDetailsBottomSheet", "photoUrls[$i]: $url")
+        }
+    }
+
+
     ModalBottomSheet(
         onDismissRequest = { onDismiss() },
         sheetState = sheetState,
@@ -39,14 +65,14 @@ fun CourtDetailsBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 450.dp)
+                .heightIn(min = 400.dp)
                 .verticalScroll(scrollState)
                 .padding(16.dp),
             horizontalAlignment = Alignment.Start
         ) {
             Text(
                 text = court.name,
-                style = MaterialTheme.typography.headlineLarge
+                style = MaterialTheme.typography.displaySmall
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -68,6 +94,7 @@ fun CourtDetailsBottomSheet(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
+            // Open/Closed Indicator and Hours
             court.openingHours?.let { hours ->
                 val pillColor = if (isOpen) Color(0xFF4CAF50) else Color(0xFFF44336)
                 val statusText = if (isOpen) "Open" else "Closed"
@@ -80,14 +107,14 @@ fun CourtDetailsBottomSheet(
                     ) {
                         Text(
                             text = statusText,
-                            style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+                            style = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                         )
                     }
-                        Text(
-                            text = "per GoogleMaps",
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                    Text(
+                        text = "per GoogleMaps",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
 
                 hours.weekdayText?.forEach { dayHours ->
@@ -101,14 +128,62 @@ fun CourtDetailsBottomSheet(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            if (photoUrls.isNotEmpty()) {
+                Text(
+                    text = "Photos",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+
+                LazyRow(
+                    contentPadding = PaddingValues(start = 12.dp, end = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(photoUrls) { photoUrl ->
+                        var isImageLoading by remember { mutableStateOf(true) }
+
+                        Box(
+                            modifier = Modifier
+                                .height(250.dp)
+                                .width(250.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(shimmerBrush(showShimmer = isImageLoading, targetValue = 1300f))
+                        ) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(photoUrl)
+                                    .build(),
+                                contentDescription = "Court Photo",
+                                contentScale = ContentScale.Crop,
+                                onSuccess = { isImageLoading = false },
+                                onError = {
+                                    isImageLoading = false
+                                    Log.e("CourtDetailsBottomSheet", "Failed to load image: $photoUrl")
+                                },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+                }
+
+
+                Spacer(modifier = Modifier.height(16.dp))
+            } else {
+                Text(
+                    text = "No photos available",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+
+            // Placeholder text for future features
             Text(
                 text = "More details coming soon...",
                 style = MaterialTheme.typography.bodyLarge
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-
+            // In the future: Add "Get Directions" and "I Got Next" button here
         }
     }
 }

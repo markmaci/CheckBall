@@ -161,7 +161,7 @@ fun MainScreen() {
                 val visibleRegion = projection.visibleRegion
                 val mapCenter = cameraPositionState.position.target
                 val rawRadius = distanceInMeters(mapCenter, visibleRegion.farRight)
-                val radius = rawRadius.coerceAtLeast(300)
+                val radius = rawRadius.coerceAtLeast(1000)
 
                 val radiusThreshold = 100
                 val positionThreshold = 100
@@ -238,6 +238,14 @@ fun MainScreen() {
                 onCourtClick = { court ->
                     selectedCourt = court
                     coroutineScope.launch {
+                        val newPhotos = mapViewModel.fetchPlaceDetailsPhotos(selectedCourt!!.placeId!!)
+                        // If newPhotos is empty, use the existing selectedCourt!!.photoReferences
+                        val finalPhotos = if (newPhotos.isNotEmpty()) newPhotos else selectedCourt!!.photoReferences
+
+                        val updatedCourt = selectedCourt!!.copy(photoReferences = finalPhotos)
+                        selectedCourt = updatedCourt
+
+                        // Now show details after updating selectedCourt with final photos
                         sheetState.hide()
                         showSheet = false
                         showDetails = true
@@ -250,7 +258,6 @@ fun MainScreen() {
     LaunchedEffect(showDetails, selectedCourt) {
         if (showDetails && selectedCourt != null) {
             delay(300)
-
             val offsetLatitude = selectedCourt!!.location.latitude - 0.0005
             cameraPositionState.animate(
                 update = CameraUpdateFactory.newLatLngZoom(
@@ -437,7 +444,7 @@ fun CourtDetailCard(
                 AsyncImage(
                     model = court.photoReferences?.firstOrNull()?.let {
                         "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=$it&key=${BuildConfig.API_KEY}"
-                    } ?: "https://via.placeholder.com/400",
+                    },
                     contentDescription = "Photo of ${court.name}",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
