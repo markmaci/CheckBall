@@ -2,8 +2,8 @@ package com.example.checkball.ui.screen
 
 import android.Manifest
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -34,10 +34,13 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.CameraPosition
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import com.google.maps.android.compose.*
 import com.example.checkball.BuildConfig
 import com.example.checkball.R
@@ -45,25 +48,34 @@ import com.example.checkball.ui.component.CourtDetailsBottomSheet
 import com.example.checkball.viewmodel.MapViewModel
 import com.example.checkball.viewmodel.Place
 import com.example.checkball.viewmodel.distanceInMeters
-import com.google.android.gms.maps.model.BitmapDescriptor
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
-fun bitmapDescriptorFromVector(context: Context, vectorResId: Int): BitmapDescriptor? {
-    val vectorDrawable = ContextCompat.getDrawable(context, vectorResId) ?: return null
+fun bitmapDescriptorFromVector(context: Context, vectorResId: Int) =
+    ContextCompat.getDrawable(context, vectorResId)?.let { vectorDrawable ->
+        val width = 128
+        val height = 128
+        vectorDrawable.setBounds(0, 0, width, height)
+        val bitmap = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bitmap)
+        vectorDrawable.draw(canvas)
+        com.google.android.gms.maps.model.BitmapDescriptorFactory.fromBitmap(bitmap)
+    }
 
-    val width = 128
-    val height = 128
-
-    vectorDrawable.setBounds(0, 0, width, height)
-
-    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-    vectorDrawable.draw(canvas)
-    return BitmapDescriptorFactory.fromBitmap(bitmap)
+fun openDirections(context: Context, destination: LatLng) {
+    val gmmIntentUri = Uri.parse("geo:${destination.latitude},${destination.longitude}?q=${destination.latitude},${destination.longitude}")
+    val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+    mapIntent.setPackage("com.google.android.apps.maps")
+    if (mapIntent.resolveActivity(context.packageManager) != null) {
+        context.startActivity(mapIntent)
+    } else {
+        Log.e("MainScreen", "No Maps application found!")
+    }
 }
 
 @Composable
@@ -74,7 +86,6 @@ fun shimmerBrush(showShimmer: Boolean = true, targetValue: Float = 1000f): Brush
             Color.LightGray.copy(alpha = 0.2f),
             Color.LightGray.copy(alpha = 0.6f),
         )
-
         val transition = rememberInfiniteTransition(label = "")
         val translateAnimation = transition.animateFloat(
             initialValue = 0f,
@@ -86,7 +97,7 @@ fun shimmerBrush(showShimmer: Boolean = true, targetValue: Float = 1000f): Brush
         Brush.linearGradient(
             colors = shimmerColors,
             start = Offset.Zero,
-            end = Offset(x = translateAnimation.value, y = translateAnimation.value)
+            end = Offset(translateAnimation.value, translateAnimation.value)
         )
     } else {
         Brush.linearGradient(
@@ -97,17 +108,13 @@ fun shimmerBrush(showShimmer: Boolean = true, targetValue: Float = 1000f): Brush
     }
 }
 
-
 @OptIn(ExperimentalPermissionsApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
     val mapViewModel: MapViewModel = hiltViewModel()
 
     val locationPermissionsState = rememberMultiplePermissionsState(
-        permissions = listOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
+        permissions = listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
     )
 
     LaunchedEffect(Unit) {
@@ -148,12 +155,15 @@ fun MainScreen() {
     var showDetails by remember { mutableStateOf(false) }
     var selectedCourt by remember { mutableStateOf<Place?>(null) }
 
+    val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
+    val userLocation: LatLng? = mapViewModel.cameraLocation
+
+    var usersAtPark by remember { mutableStateOf<List<String>>(emptyList()) }
+
     LaunchedEffect(cameraPositionState.position) {
         delay(300)
-
-        if (showDetails) {
-            return@LaunchedEffect
-        }
+        if (showDetails) return@LaunchedEffect
 
         if (!cameraPositionState.isMoving) {
             val projection = cameraPositionState.projection
@@ -182,14 +192,9 @@ fun MainScreen() {
         }
     }
 
-
     val coroutineScope = rememberCoroutineScope()
 
-
-
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         if (hasLocationPermissions) {
             GoogleMapView(
                 cameraPositionState = cameraPositionState,
@@ -220,9 +225,7 @@ fun MainScreen() {
     }
 
     if (showSheet) {
-        val sheetState = rememberModalBottomSheetState(
-            skipPartiallyExpanded = true
-        )
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
             modifier = Modifier
                 .padding(top = 50.dp)
@@ -239,13 +242,17 @@ fun MainScreen() {
                     selectedCourt = court
                     coroutineScope.launch {
                         val newPhotos = mapViewModel.fetchPlaceDetailsPhotos(selectedCourt!!.placeId!!)
-                        // If newPhotos is empty, use the existing selectedCourt!!.photoReferences
                         val finalPhotos = if (newPhotos.isNotEmpty()) newPhotos else selectedCourt!!.photoReferences
-
                         val updatedCourt = selectedCourt!!.copy(photoReferences = finalPhotos)
                         selectedCourt = updatedCourt
 
-                        // Now show details after updating selectedCourt with final photos
+                        val firestore = Firebase.firestore
+                        val parkRef = firestore.collection("parks")
+                            .document("${selectedCourt!!.location.latitude},${selectedCourt!!.location.longitude}")
+                        val doc = parkRef.get().await()
+                        val initialUsers = doc.get("users") as? List<String> ?: emptyList()
+                        usersAtPark = initialUsers
+
                         sheetState.hide()
                         showSheet = false
                         showDetails = true
@@ -253,6 +260,27 @@ fun MainScreen() {
                 }
             )
         }
+    }
+
+    suspend fun updateIgotNext(court: Place) {
+        val firestore = Firebase.firestore
+        val parkRef = firestore.collection("parks")
+            .document("${court.location.latitude},${court.location.longitude}")
+
+        val userDoc = firestore.collection("users").document(currentUserUid).get().await()
+        val currentUserUsername = userDoc.getString("displayname") ?: "Unknown Player"
+
+        parkRef.update("users", FieldValue.arrayUnion(currentUserUsername))
+            .addOnSuccessListener {
+                Log.d("MainScreen", "Added $currentUserUsername to ${court.name}")
+                parkRef.get().addOnSuccessListener { doc ->
+                    val updatedUsers = doc.get("users") as? List<String> ?: emptyList()
+                    usersAtPark = updatedUsers
+                }
+            }
+            .addOnFailureListener {
+                Log.e("MainScreen", "Failed to add user: ${it.message}")
+            }
     }
 
     LaunchedEffect(showDetails, selectedCourt) {
@@ -275,7 +303,13 @@ fun MainScreen() {
             onDismiss = {
                 showDetails = false
                 selectedCourt = null
-            }
+            },
+            currentUserUid = currentUserUid,
+            userLocation = userLocation,
+            onIGotNextClick = {
+                updateIgotNext(selectedCourt!!)
+            },
+            usersAtPark = usersAtPark
         )
     }
 
@@ -304,8 +338,7 @@ fun GoogleMapView(
     }
 
     GoogleMap(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         cameraPositionState = cameraPositionState,
         uiSettings = uiSettings,
         properties = properties,
@@ -376,8 +409,7 @@ fun CourtBottomSheetContent(
                 .fillMaxWidth()
                 .height(30.dp),
             contentAlignment = Alignment.Center
-        ) {
-        }
+        ) {}
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -444,7 +476,7 @@ fun CourtDetailCard(
                 AsyncImage(
                     model = court.photoReferences?.firstOrNull()?.let {
                         "https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=$it&key=${BuildConfig.API_KEY}"
-                    },
+                    } ?: "https://via.placeholder.com/400",
                     contentDescription = "Photo of ${court.name}",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
@@ -454,9 +486,7 @@ fun CourtDetailCard(
             }
 
             Spacer(modifier = Modifier.width(8.dp))
-            Column(
-                modifier = Modifier.weight(2f)
-            ) {
+            Column(modifier = Modifier.weight(2f)) {
                 Text(
                     text = court.name,
                     style = MaterialTheme.typography.titleMedium.copy(color = Color.White),
@@ -472,3 +502,4 @@ fun CourtDetailCard(
         }
     }
 }
+

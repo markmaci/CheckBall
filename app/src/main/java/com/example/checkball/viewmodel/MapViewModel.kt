@@ -104,7 +104,6 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
                 PackageManager.PERMISSION_GRANTED
     }
 
-
     @SuppressLint("MissingPermission")
     fun fetchUserLocation() {
         if (!hasLocationPermission()) return
@@ -130,7 +129,6 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
             Looper.getMainLooper()
         )
     }
-
 
     fun onCameraMoved(newCameraLocation: LatLng, newZoomLevel: Float) {
         viewModelScope.launch {
@@ -284,8 +282,6 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
             ).show()
             Log.d("MapViewModel", "Total courts fetched: ${allCourts.size}")
         }
-
-
     }
 
     suspend fun fetchPlaceDetailsPhotos(placeId: String): List<String> {
@@ -316,23 +312,23 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
     }
 }
 
-    data class Place(
-        val name: String,
-        val location: LatLng,
-        val placeId: String? = null,
-        val address: String? = null,
-        val phoneNumber: String? = null,
-        val website: String? = null,
-        val rating: Float? = null,
-        val userRatingsTotal: Int? = null,
-        val photoReferences: List<String>? = null,
-        val openingHours: OpeningHours? = null
-    )
+data class Place(
+    val name: String,
+    val location: LatLng,
+    val placeId: String? = null,
+    val address: String? = null,
+    val phoneNumber: String? = null,
+    val website: String? = null,
+    val rating: Float? = null,
+    val userRatingsTotal: Int? = null,
+    val photoReferences: List<String>? = null,
+    val openingHours: OpeningHours? = null
+)
 
-    data class OpeningHours(
-        val openNow: Boolean,
-        val weekdayText: List<String>? = null
-    )
+data class OpeningHours(
+    val openNow: Boolean,
+    val weekdayText: List<String>? = null
+)
 
 fun distanceInMeters(from: LatLng, to: LatLng): Int {
     val r = 6371000

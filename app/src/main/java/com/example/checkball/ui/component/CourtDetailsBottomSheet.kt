@@ -1,9 +1,7 @@
 package com.example.checkball.ui.component
 
 import android.util.Log
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -18,26 +16,35 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.checkball.BuildConfig
 import com.example.checkball.R
+import com.example.checkball.ui.screen.openDirections
 import com.example.checkball.ui.screen.shimmerBrush
 import com.example.checkball.viewmodel.Place
+import com.example.checkball.viewmodel.distanceInMeters
+import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CourtDetailsBottomSheet(
     court: Place,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    currentUserUid: String,
+    userLocation: LatLng?,
+    onIGotNextClick: suspend () -> Unit,
+    usersAtPark: List<String>
 ) {
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
     val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     val isOpen = court.openingHours?.openNow == true
 
@@ -54,6 +61,28 @@ fun CourtDetailsBottomSheet(
         }
     }
 
+    val distanceMeters = remember(userLocation, court) {
+        if (userLocation != null) {
+            distanceInMeters(userLocation, court.location)
+        } else {
+            null
+        }
+    }
+
+    val (iconRes, etaText) = remember(distanceMeters) {
+        if (distanceMeters == null) {
+            R.drawable.car_icon to "Directions"
+        } else {
+            val distanceKm = distanceMeters / 1000.0
+            if (distanceKm < 1.5) {
+                val mins = (distanceKm * 12).toInt()
+                R.drawable.walking_icon to "${mins} min Walk"
+            } else {
+                val mins = (distanceKm * 2).toInt()
+                R.drawable.car_icon to "${mins} min Drive"
+            }
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = { onDismiss() },
@@ -94,7 +123,6 @@ fun CourtDetailsBottomSheet(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            // Open/Closed Indicator and Hours
             court.openingHours?.let { hours ->
                 val pillColor = if (isOpen) Color(0xFF4CAF50) else Color(0xFFF44336)
                 val statusText = if (isOpen) "Open" else "Closed"
@@ -107,7 +135,7 @@ fun CourtDetailsBottomSheet(
                     ) {
                         Text(
                             text = statusText,
-                            style = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
+                            style = MaterialTheme.typography.bodySmall.copy(color = Color.White),
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                         )
                     }
@@ -150,7 +178,7 @@ fun CourtDetailsBottomSheet(
                                 .background(shimmerBrush(showShimmer = isImageLoading, targetValue = 1300f))
                         ) {
                             AsyncImage(
-                                model = ImageRequest.Builder(LocalContext.current)
+                                model = ImageRequest.Builder(context)
                                     .data(photoUrl)
                                     .build(),
                                 contentDescription = "Court Photo",
@@ -166,7 +194,6 @@ fun CourtDetailsBottomSheet(
                     }
                 }
 
-
                 Spacer(modifier = Modifier.height(16.dp))
             } else {
                 Text(
@@ -176,14 +203,68 @@ fun CourtDetailsBottomSheet(
                 )
             }
 
-            // Placeholder text for future features
-            Text(
-                text = "More details coming soon...",
-                style = MaterialTheme.typography.bodyLarge
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Button(
+                    onClick = { openDirections(context, court.location) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3)),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        painter = painterResource(id = iconRes),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(etaText, color = Color.White)
+                }
+
+                Button(
+                    onClick = {
+                        scope.launch { onIGotNextClick() }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFA500)),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.i_got_next_icon),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("I Got Next", color = Color.White)
+                }
+            }
+
 
             Spacer(modifier = Modifier.height(16.dp))
-            // In the future: Add "Get Directions" and "I Got Next" button here
+
+            Text(
+                text = "Players at the Court:",
+                style = MaterialTheme.typography.titleMedium
+            )
+            if (usersAtPark.isEmpty()) {
+                Text(
+                    text = "No one yet!",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            } else {
+                Column(modifier = Modifier.padding(top = 8.dp)) {
+                    usersAtPark.forEach { username ->
+                        Text(
+                            text = username,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
