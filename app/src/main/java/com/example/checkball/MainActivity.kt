@@ -35,7 +35,7 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val auth = FirebaseAuth.getInstance()
     val isLoggedIn = auth.currentUser != null
-    val startDestination = if (isLoggedIn) "profile" else "login"
+    val startDestination = if (isLoggedIn) "main" else "login"
     val userId = auth.currentUser?.uid
     val userProfileViewModel: UserProfileViewModel = viewModel()
 
