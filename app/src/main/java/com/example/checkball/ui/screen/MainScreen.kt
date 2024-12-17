@@ -268,7 +268,7 @@ fun MainScreen() {
             .document("${court.location.latitude},${court.location.longitude}")
 
         val userDoc = firestore.collection("users").document(currentUserUid).get().await()
-        val currentUserUsername = userDoc.getString("displayname") ?: "Unknown Player"
+        val currentUserUsername = userDoc.getString("displayName") ?: "Unknown Player"
 
         parkRef.update("users", FieldValue.arrayUnion(currentUserUsername))
             .addOnSuccessListener {
