@@ -33,6 +33,8 @@ data class Post(
     var authorDisplayName: String = ""
 )
 
+
+// The main function to get the posts from the specific park the user is looking at
 @Composable
 fun HighlightsDetailsCard(court: Place?, onBack: () -> Unit, userProfileViewModel: UserProfileViewModel) {
     val context = LocalContext.current
@@ -45,6 +47,7 @@ fun HighlightsDetailsCard(court: Place?, onBack: () -> Unit, userProfileViewMode
     var posts by remember { mutableStateOf<List<Post>>(emptyList()) }
     var selectedUserId by remember { mutableStateOf<String?>(null) }
 
+    // Fetch posts when screen opens
     LaunchedEffect(court) {
         court?.let {
             fetchPostsWithAuthors(it, firestore) { fetchedPosts ->
@@ -84,6 +87,7 @@ fun HighlightsDetailsCard(court: Place?, onBack: () -> Unit, userProfileViewMode
             }
         }
 
+        // Posts List
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(posts) { post ->
                 PostCard(
@@ -104,6 +108,7 @@ fun HighlightsDetailsCard(court: Place?, onBack: () -> Unit, userProfileViewMode
             }
         }
 
+        // Add Post Form
         if (showForm) {
             AddPostForm(
                 onDismiss = { showForm = false },
@@ -128,6 +133,7 @@ fun HighlightsDetailsCard(court: Place?, onBack: () -> Unit, userProfileViewMode
     }
 }
 
+// Show the posts in their own cards
 @Composable
 fun PostCard(
     post: Post,
@@ -148,6 +154,7 @@ fun PostCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            // Caption and Description Row
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = post.caption,
@@ -164,11 +171,13 @@ fun PostCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Author and Likes Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Author Section
                 TextButton(onClick = { onAuthorClick(post.authorId) }) {
                     Text(
                         text = "By ${post.authorDisplayName}",
@@ -176,6 +185,7 @@ fun PostCard(
                     )
                 }
 
+                // Likes Section
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -201,6 +211,7 @@ fun PostCard(
 }
 
 
+// Get the posts and ensure you get user author important to get to the stats page of the author
 private fun fetchPostsWithAuthors(
     court: Place,
     firestore: FirebaseFirestore,
@@ -236,6 +247,7 @@ private fun fetchPostsWithAuthors(
         }
 }
 
+// used to get the profile of the authors
 private fun fetchUserProfiles(
     userIds: List<String>,
     firestore: FirebaseFirestore,
@@ -261,6 +273,8 @@ private fun fetchUserProfiles(
     }
 }
 
+
+// Main function to submit a post for storage for that specific park
 private fun submitPostToFirestore(
     court: Place,
     caption: String,
@@ -291,6 +305,7 @@ private fun submitPostToFirestore(
         }
 }
 
+// For the like feature
 private fun toggleLike(
     court: Place?,
     post: Post,
@@ -325,6 +340,7 @@ private fun toggleLike(
     }
 }
 
+// Add the post to that park
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddPostForm(
@@ -383,7 +399,7 @@ fun AddPostForm(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp),
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center // Center-align buttons
             ) {
                 Button(
                     onClick = { onSubmit(caption, description) },

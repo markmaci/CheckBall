@@ -105,6 +105,8 @@ dependencies {
     implementation(libs.firebase.analytics)
 
     // Firebase dependencies
+    implementation("com.google.firebase:firebase-storage:20.3.0")
+    implementation("com.google.firebase:firebase-database:20.3.1")
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage.ktx)

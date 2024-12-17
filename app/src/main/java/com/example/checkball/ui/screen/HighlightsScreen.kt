@@ -46,7 +46,7 @@ fun HighlightsScreen() {
             isLoading = false
         }
     }
-
+    // Transition between pages and the page format of this file
     Crossfade(targetState = selectedCourt, animationSpec = tween(800)) { court ->
         if (court == null) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -122,6 +122,7 @@ fun HighlightsScreen() {
                 }
             }
         } else {
+            // Uses the other kt file to go to the details of the highlights screen
             HighlightsDetailsCard(
                 court = court,
                 onBack = { selectedCourt = null },
@@ -131,6 +132,7 @@ fun HighlightsScreen() {
     }
 }
 
+// Helper function to get court photos
 private suspend fun fetchCourtsWithPhotos(
     mapViewModel: MapViewModel,
     radius: Int = 5000,
@@ -147,6 +149,7 @@ private suspend fun fetchCourtsWithPhotos(
     onCourtsFetched(courtsWithPhotos)
 }
 
+//  This displays each court based off the properties of the court
 @Composable
 fun CourtCard(court: Place, onClick: () -> Unit) {
     Card(
