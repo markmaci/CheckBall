@@ -1,25 +1,49 @@
+import java.util.Properties
+
+val secrets = Properties().apply {
+    val secretsFile = rootProject.file("secrets.properties")
+    if (secretsFile.exists()) {
+        load(secretsFile.inputStream())
+    } else {
+        println("Warning: secrets.properties file is missing. Default values will be used.")
+    }
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
 
     id("com.google.gms.google-services")
+
+    id("com.google.dagger.hilt.android") // Apply Hilt plugin
+    kotlin("kapt") // For annotation processing
+    id("com.google.firebase.crashlytics")
 }
 
 android {
     namespace = "com.example.checkball"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.checkball"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+
+        buildConfigField("String", "API_KEY", "\"${secrets.getProperty("API_KEY", "default_api_key")}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        manifestPlaceholders.putAll(
+            mapOf(
+                "APPLICATION_ID" to secrets.getProperty("APPLICATION_ID", "default_application_id"),
+                "API_KEY" to secrets.getProperty("API_KEY", "default_api_key")
+            )
+        )
     }
 
     buildTypes {
@@ -40,6 +64,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -61,6 +86,11 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.compose.material)
+    implementation(libs.androidx.material.icons.core.android)
+    implementation(libs.androidx.material.icons.core.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -76,20 +106,36 @@ dependencies {
     implementation(libs.firebase.analytics)
 
     // Firebase dependencies
+    implementation("com.google.firebase:firebase-storage:20.3.0")
+    implementation("com.google.firebase:firebase-database:20.3.1")
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.storage.ktx)
     implementation(libs.firebase.analytics.ktx)
-    implementation(libs.firebase.crashlytics.ktx)
+//    implementation(libs.firebase.crashlytics.ktx)
 
     // Google Maps and Places
     implementation(libs.play.services.maps)
     implementation(libs.places)
+    implementation(libs.maps.compose)
 
     // Navigation Component
     implementation(libs.androidx.navigation.compose)
 
-    // Accompanist Permissions
+    // Accompanist Permissifons
     implementation(libs.accompanist.permissions)
 
+    // Hilt
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+
+    // Hilt Navigation Compose
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    // Google Play Services
+    implementation(libs.play.services.auth)
+
+    // Firebase Authentication
+    implementation(platform(libs.firebase.bom.v3211))
+    implementation(libs.google.firebase.auth.ktx)
 }

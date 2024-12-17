@@ -5,3 +5,16 @@ plugins {
 
     id("com.google.gms.google-services") version "4.4.2" apply false
 }
+
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath(libs.hilt.android.gradle.plugin)
+        classpath(libs.google.services.v4315)
+        classpath(libs.hilt.android.gradle.plugin)
+        classpath(libs.firebase.crashlytics.gradle)
+    }
+}
