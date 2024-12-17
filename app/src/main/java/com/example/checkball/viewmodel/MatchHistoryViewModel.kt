@@ -35,18 +35,26 @@ class MatchHistoryViewModel : ViewModel() {
     }
 
     fun addMatch(newMatch: Match, user: User) {
+        val calculatedResult = if (newMatch.pointsScored >= newMatch.opponentPointsScored) {
+            "Win"
+        } else {
+            "Loss"
+        }
+
+        val matchWithResult = newMatch.copy(result = calculatedResult)
+
         val updatedMatches = _matchHistory.value.toMutableList().apply {
-            add(0, newMatch)
+            add(0, matchWithResult)
             if (size > 10) removeAt(size - 1)
         }
 
         _matchHistory.value = updatedMatches
-        saveMatchToFirestore(newMatch, user)
+        saveMatchToFirestore(matchWithResult, user)
 
         val updatedStats = RecentStats(
-            pointsScored = newMatch.pointsScored,
-            assists = newMatch.assists,
-            rebounds = newMatch.rebounds
+            pointsScored = matchWithResult.pointsScored,
+            assists = matchWithResult.assists,
+            rebounds = matchWithResult.rebounds
         )
         matchRepository.logGameStats(updatedStats, {}, {})
     }
