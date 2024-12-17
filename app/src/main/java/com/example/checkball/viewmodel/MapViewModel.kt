@@ -22,6 +22,7 @@ import org.json.JSONObject
 import java.net.URL
 import javax.inject.Inject
 import com.example.checkball.BuildConfig
+import kotlinx.coroutines.tasks.await
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
@@ -102,6 +103,16 @@ class MapViewModel @Inject constructor(application: Application) : AndroidViewMo
             android.Manifest.permission.ACCESS_FINE_LOCATION
         ) ==
                 PackageManager.PERMISSION_GRANTED
+    }
+
+    suspend fun getDisplayName(uid: String): String {
+        return try {
+            val userDoc = Firebase.firestore.collection("users").document(uid).get().await()
+            userDoc.getString("displayName") ?: "Unknown Player"
+        } catch (e: Exception) {
+            Log.e("MapViewModel", "Error fetching displayName for UID $uid: ${e.message}")
+            "Unknown Player"
+        }
     }
 
     @SuppressLint("MissingPermission")

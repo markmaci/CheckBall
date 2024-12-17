@@ -18,12 +18,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.checkball.BuildConfig
 import com.example.checkball.R
 import com.example.checkball.ui.screen.openDirections
 import com.example.checkball.ui.screen.shimmerBrush
+import com.example.checkball.viewmodel.MapViewModel
 import com.example.checkball.viewmodel.Place
 import com.example.checkball.viewmodel.distanceInMeters
 import com.google.android.gms.maps.model.LatLng
@@ -37,7 +39,10 @@ fun CourtDetailsBottomSheet(
     currentUserUid: String,
     userLocation: LatLng?,
     onIGotNextClick: suspend () -> Unit,
-    usersAtPark: List<String>
+    onImOutClick: suspend () -> Unit,
+    usersAtPark: List<String>,
+    currentUserUsername: String,
+    mapViewModel: MapViewModel
 ) {
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -60,6 +65,15 @@ fun CourtDetailsBottomSheet(
             Log.d("CourtDetailsBottomSheet", "photoUrls[$i]: $url")
         }
     }
+
+    var usersDisplayNames by remember { mutableStateOf<List<String>>(emptyList()) }
+
+    LaunchedEffect(usersAtPark) {
+        usersDisplayNames = usersAtPark.map { uid ->
+            mapViewModel.getDisplayName(uid)
+        }
+    }
+
 
     val distanceMeters = remember(userLocation, court) {
         if (userLocation != null) {
@@ -222,21 +236,40 @@ fun CourtDetailsBottomSheet(
                     Text(etaText, color = Color.White)
                 }
 
-                Button(
-                    onClick = {
-                        scope.launch { onIGotNextClick() }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFA500)),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.i_got_next_icon),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("I Got Next", color = Color.White)
+                if (usersAtPark.contains(currentUserUid)) {
+                    Button(
+                        onClick = {
+                            scope.launch { onImOutClick() }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B0000)), // Blood Orange
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.im_out),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("I'm Out", color = Color.White)
+                    }
+                } else {
+                    Button(
+                        onClick = {
+                            scope.launch { onIGotNextClick() }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFA500)),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.i_got_next_icon),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("I Got Next", color = Color.White)
+                    }
                 }
             }
 
@@ -255,11 +288,13 @@ fun CourtDetailsBottomSheet(
                 )
             } else {
                 Column(modifier = Modifier.padding(top = 8.dp)) {
-                    usersAtPark.forEach { username ->
-                        Text(
-                            text = username,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
+                    Column(modifier = Modifier.padding(top = 8.dp)) {
+                        usersDisplayNames.forEach { username ->
+                            Text(
+                                text = username,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
                     }
                 }
             }
